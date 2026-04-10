@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-dm-sans: 'DM Sans', sans-serif;
+  --font-instrument-serif: 'Instrument Serif', serif;
+  --font-dm-mono: 'DM Mono', monospace;
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body { @apply bg-parchment-100 text-gray-900 font-sans; }
+  ::selection { @apply bg-forest-200 text-forest-800; }
+  
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { @apply bg-parchment-200; }
+  ::-webkit-scrollbar-thumb { @apply bg-parchment-400 rounded-full; }
+}
+
+@layer components {
+  /* Glass morphism card */
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-glass;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-br from-forest-600 via-forest-500 to-forest-400 bg-clip-text text-transparent;
+  }
+
+  /* Animated gradient border */
+  .gradient-border {
+    position: relative;
+    background: white;
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #2d5a3d, #7fc29a, #2d5a3d);
+    background-size: 200% 200%;
+    animation: borderRotate 4s linear infinite;
+    z-index: -1;
+  }
+  @keyframes borderRotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Shimmer loading */
+  .shimmer {
+    background: linear-gradient(90deg, #f0efe9 25%, #e8e7e0 50%, #f0efe9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Streaming text cursor */
+  .streaming-cursor::after {
+    content: '▊';
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Input focus ring */
+  .input-ring {
+    @apply outline-none ring-0 focus:ring-2 focus:ring-forest-400/30 focus:border-forest-400 transition-all duration-200;
+  }
+  
+  /* Score ring animation */
+  .score-ring {
+    stroke-dasharray: 251.2;
+    stroke-dashoffset: 251.2;
+    animation: fillRing 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.3s;
+  }
+  @keyframes fillRing {
+    to { stroke-dashoffset: var(--score-offset); }
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+}
