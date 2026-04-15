@@ -5,8 +5,8 @@ import { createClient } from '@supabase/supabase-js'
 
 export const config = { api: { bodyParser: false } }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
-const supabaseAdmin = createClient(
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
+const getSupabaseAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch (err: any) {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 })
   }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
           .from('users').select('id').eq('stripe_customer_id', sub.customer).limit(1)
 
         if (users?.length) {
-          await supabaseAdmin.from('users').update({
+          await getSupabaseAdmin().from('users').update({
             plan: sub.status === 'active' ? plan : 'free',
             stripe_subscription_id: sub.id,
             subscription_status: sub.status,
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
         const { data: users } = await supabaseAdmin
           .from('users').select('id').eq('stripe_customer_id', sub.customer).limit(1)
         if (users?.length) {
-          await supabaseAdmin.from('users').update({
+          await getSupabaseAdmin().from('users').update({
             plan: 'free',
             stripe_subscription_id: null,
             subscription_status: 'cancelled',

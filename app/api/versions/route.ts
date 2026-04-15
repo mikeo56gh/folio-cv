@@ -1,7 +1,7 @@
 // app/api/versions/route.ts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
+const getSupabaseAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -13,7 +13,7 @@ const VERSION_LIMITS: Record<string, number> = {
 async function getUser(request: Request) {
   const auth = request.headers.get('authorization')
   if (!auth?.startsWith('Bearer ')) return null
-  const { data: { user } } = await supabaseAdmin.auth.getUser(auth.replace('Bearer ', ''))
+  const { data: { user } } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
   return user || null
 }
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
 
   // Check version limit
-  const { data: userRecord } = await supabaseAdmin.from('users').select('plan').eq('id', user.id).single()
+  const { data: userRecord } = await getSupabaseAdmin().from('users').select('plan').eq('id', user.id).single()
   const plan = userRecord?.plan || 'free'
   const limit = VERSION_LIMITS[plan] ?? 3
 

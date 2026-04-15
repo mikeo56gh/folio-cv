@@ -1,7 +1,10 @@
 // app/api/user/me/route.ts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const getSupabaseAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 const PLAN_LIMITS: Record<string, Record<string, number>> = {
   free:      { cv: 3, cl: 1, review: 1, interview: 0, flags: 0, keywords: 0, company_research: 0 },
@@ -19,10 +22,10 @@ export async function GET(request: Request) {
   const auth = request.headers.get('authorization')
   if (!auth?.startsWith('Bearer ')) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
 
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(auth.replace('Bearer ', ''))
+  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
   if (error || !user) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401 })
 
-  const { data: userRecord } = await supabaseAdmin.from('users').select('*').eq('id', user.id).single()
+  const { data: userRecord } = await getSupabaseAdmin().from('users').select('*').eq('id', user.id).single()
 
   const plan = userRecord?.plan || 'free'
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free

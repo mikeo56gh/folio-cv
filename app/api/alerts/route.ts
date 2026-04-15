@@ -2,7 +2,7 @@
 // CRUD for job alerts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
+const getSupabaseAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 async function getUser(request: Request) {
   const auth = request.headers.get('authorization')
   if (!auth?.startsWith('Bearer ')) return null
-  const { data: { user } } = await supabaseAdmin.auth.getUser(auth.replace('Bearer ', ''))
+  const { data: { user } } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
   return user
 }
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
 
   // Plan check
-  const { data: userRecord } = await supabaseAdmin.from('users').select('plan, subscription_status').eq('id', user.id).single()
+  const { data: userRecord } = await getSupabaseAdmin().from('users').select('plan, subscription_status').eq('id', user.id).single()
   const plan = userRecord?.plan || 'free'
   if (!['pro', 'boost', 'sprint', 'recruiter'].includes(plan) || userRecord?.subscription_status !== 'active') {
     return new Response(JSON.stringify({ error: 'Job alerts require an active Pro, Sprint, or Boost subscription.', upgrade: true }), { status: 403 })
@@ -58,9 +58,9 @@ export async function DELETE(request: Request) {
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
 
   const { id } = await request.json()
-  const { data: alert } = await supabaseAdmin.from('job_alerts').select('user_id').eq('id', id).single()
+  const { data: alert } = await getSupabaseAdmin().from('job_alerts').select('user_id').eq('id', id).single()
   if (!alert || alert.user_id !== user.id) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 })
 
-  await supabaseAdmin.from('job_alerts').delete().eq('id', id)
+  await getSupabaseAdmin().from('job_alerts').delete().eq('id', id)
   return new Response(JSON.stringify({ success: true }), { status: 200 })
 }

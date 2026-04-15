@@ -5,7 +5,7 @@ import { streamText, generateObject } from 'ai'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
+const getSupabaseAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -31,9 +31,9 @@ async function checkAuth(request: Request) {
   const auth = request.headers.get('authorization')
   if (!auth?.startsWith('Bearer ')) return { error: 'Unauthorised', status: 401 }
   const token = auth.replace('Bearer ', '')
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(token)
   if (error || !user) return { error: 'Invalid session', status: 401 }
-  const { data: userRecord } = await supabaseAdmin.from('users').select('*').eq('id', user.id).single()
+  const { data: userRecord } = await getSupabaseAdmin().from('users').select('*').eq('id', user.id).single()
   return { user, userRecord: userRecord || { plan: 'free', usage: {} } }
 }
 
@@ -45,7 +45,7 @@ async function checkAndIncrementUsage(userId: string, feature: string, userRecor
   const usage = userRecord?.usage || {}
   const count = usage[feature] || 0
   if (count >= limit) return { allowed: false, reason: `${feature} limit reached (${limit}/${plan} plan). Upgrade for unlimited.`, upgrade: true }
-  await supabaseAdmin.from('users').update({ usage: { ...usage, [feature]: count + 1 }, updated_at: new Date().toISOString() }).eq('id', userId)
+  await getSupabaseAdmin().from('users').update({ usage: { ...usage, [feature]: count + 1 }, updated_at: new Date().toISOString() }).eq('id', userId)
   return { allowed: true }
 }
 
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     maxTokens: 2000,
     onFinish: async ({ text }) => {
       try {
-        await supabaseAdmin.from('usage_events').insert({
+        await getSupabaseAdmin().from('usage_events').insert({
           user_id: user.id,
           event: type,
           plan: userRecord?.plan || 'free',

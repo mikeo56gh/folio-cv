@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 300 // 5 minutes — enough to process many users
 
-const supabaseAdmin = createClient(
+const getSupabaseAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )

@@ -1,7 +1,7 @@
 // app/api/profiles/[id]/route.ts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
+const getSupabaseAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 async function getUser(request: Request) {
   const auth = request.headers.get('authorization')
   if (!auth?.startsWith('Bearer ')) return null
-  const { data: { user } } = await supabaseAdmin.auth.getUser(auth.replace('Bearer ', ''))
+  const { data: { user } } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
   return user || null
 }
 
@@ -60,6 +60,6 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     return new Response(JSON.stringify({ error: 'Cannot delete default profile' }), { status: 400 })
   }
 
-  await supabaseAdmin.from('profiles').delete().eq('id', params.id)
+  await getSupabaseAdmin().from('profiles').delete().eq('id', params.id)
   return new Response(JSON.stringify({ success: true }), { status: 200 })
 }

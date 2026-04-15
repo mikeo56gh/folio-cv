@@ -4,7 +4,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
+const getSupabaseAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -17,11 +17,11 @@ export async function POST(request: Request) {
   if (!auth?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
   }
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(auth.replace('Bearer ', ''))
+  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
   if (error || !user) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401 })
 
   // Plan check — LinkedIn optimiser is Boost/Sprint+ only
-  const { data: userRecord } = await supabaseAdmin.from('users').select('plan').eq('id', user.id).single()
+  const { data: userRecord } = await getSupabaseAdmin().from('users').select('plan').eq('id', user.id).single()
   const plan = userRecord?.plan || 'free'
   if (!['boost', 'sprint', 'recruiter'].includes(plan)) {
     return new Response(JSON.stringify({ error: 'LinkedIn optimiser requires Career Boost or Sprint. Upgrade to unlock.', upgrade: true }), { status: 403 })
