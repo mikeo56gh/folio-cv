@@ -1,247 +1,278 @@
 'use client'
-import { ArrowRight, CheckCircle, Zap, Shield, BarChart2, Search, FileText, Mail, Star, ChevronDown, Sparkles } from 'lucide-react'
+import { ArrowRight, CheckCircle, Zap, Shield, BarChart2, Search, FileText, Mail, Star, ChevronDown, Sparkles, TrendingUp, Linkedin } from 'lucide-react'
 import Link from 'next/link'
 
 const FEATURES = [
-  { icon: FileText, label: 'ATS-optimised CV', desc: 'AI selects and reframes only your most relevant achievements for each specific role' },
-  { icon: Mail, label: 'Cover letter', desc: 'Unique narrative tailored to the company — not a template' },
-  { icon: BarChart2, label: 'Fit review & score', desc: 'Honest assessment of how well you match — before you waste time applying' },
-  { icon: Search, label: 'Company research', desc: 'Live intel on culture, news, and talking points to reference in your application' },
-  { icon: Zap, label: 'Interview prep', desc: '10 targeted questions with suggested angles based on your actual experience' },
-  { icon: Shield, label: 'Red flag checker', desc: 'Catches what a recruiter would silently reject — before they do' },
+  { icon: FileText,   label: 'ATS-optimised CV',      desc: 'Selects and reframes only your most relevant achievements per role — not a template dump.' },
+  { icon: Mail,       label: 'Cover letter',           desc: 'Unique narrative built around the company. Reads human. Never sounds generated.' },
+  { icon: BarChart2,  label: 'Fit review & score',     desc: 'Honest 0–100 match score with dimension breakdown before you waste time applying.' },
+  { icon: Search,     label: 'Company research',       desc: 'Live intel on culture, recent news, and talking points to reference in your application.' },
+  { icon: Zap,        label: 'Interview prep',         desc: '10 targeted questions with suggested angles drawn from your actual experience.' },
+  { icon: Shield,     label: 'Red flag check',         desc: 'Catches what a recruiter would silently reject — before they do.' },
+  { icon: Linkedin,   label: 'LinkedIn optimiser',     desc: 'Rewrites your About section and headline for LinkedIn\'s search algorithm.' },
+  { icon: TrendingUp, label: 'Salary coach',           desc: 'Counter-offer strategy, talking points, phone script, and follow-up email.' },
 ]
 
 const PLANS = [
   {
-    name: 'Free', price: '£0', period: '',
-    desc: 'Try Folio with no commitment',
+    name: 'Free',
+    price: '£0', period: '',
+    desc: 'Try it. No card needed.',
     features: ['3 CV generations', '1 cover letter', '1 fit review', '5 job searches'],
-    cta: 'Start free', href: '/auth', highlight: false,
+    cta: 'Start free', href: '/auth', highlight: false, badge: null,
   },
   {
-    name: 'Job Seeker Sprint', price: '£39', period: '/3 months',
-    desc: 'Most people find a role in 3 months. Pay once, stop when you land.',
-    features: ['Everything in Pro — unlimited', 'LinkedIn profile optimiser', 'Weekly job alerts', 'Company research', 'Interview prep', 'No monthly commitment'],
-    cta: 'Start Sprint', href: '/auth?plan=sprint', highlight: true,
+    name: 'Sprint',
+    price: '£39', period: '/3 months',
+    desc: 'Most people land a role in 3 months. Pay once, stop when you do.',
+    features: ['Everything unlimited', 'LinkedIn optimiser', 'Salary coach', 'Weekly job alerts', 'No monthly commitment'],
+    cta: 'Start Sprint', href: '/auth?plan=sprint', highlight: true, badge: 'Best value',
   },
   {
-    name: 'Pro', price: '£9', period: '/mo',
-    desc: 'Unlimited tools, cancel any time',
-    features: ['Unlimited CVs & cover letters', 'Unlimited fit reviews', 'Live company research', 'Interview prep & red flag check', 'ATS keyword gap analysis', 'Version history'],
-    cta: 'Start Pro', href: '/auth?plan=pro', highlight: false,
+    name: 'Pro',
+    price: '£9', period: '/mo',
+    desc: 'Unlimited tools. Cancel any time.',
+    features: ['Unlimited CVs & letters', 'Company research', 'Interview prep', 'Red flag check', 'Version history'],
+    cta: 'Start Pro', href: '/auth?plan=pro', highlight: false, badge: null,
   },
   {
-    name: 'Career Boost', price: '£19', period: '/mo',
-    desc: 'Every advantage, every tool',
-    features: ['Everything in Pro', 'LinkedIn profile optimiser', 'Salary negotiation coach', 'Weekly job alerts', 'Unlimited profiles'],
-    cta: 'Start Boost', href: '/auth?plan=boost', highlight: false,
+    name: 'Boost',
+    price: '£19', period: '/mo',
+    desc: 'Every tool, every advantage.',
+    features: ['Everything in Pro', 'LinkedIn optimiser', 'Salary coach', 'Weekly job alerts'],
+    cta: 'Start Boost', href: '/auth?plan=boost', highlight: false, badge: null,
   },
 ]
 
 const TESTIMONIALS = [
-  { name: 'Sarah M.', role: 'Product Manager → Director', quote: 'The fit review told me I was a weak match before I wasted 2 hours on an application. Ended up landing a better role through Folio a week later.' },
-  { name: 'James K.', role: 'Grad → Software Engineer', quote: 'The keyword gap analysis was a game changer. I was missing 8 key terms from my CV that ATS would filter on. Got 3x more callbacks after fixing it.' },
-  { name: 'Rachel T.', role: 'Senior Manager → Director', quote: 'The company research feature is insane. I walked into my interview knowing things about their Q3 strategy that surprised the hiring team.' },
-]
-
-const STATS = [
-  { num: '3x', label: 'more callbacks' },
-  { num: '47%', label: 'faster job search' },
-  { num: '£8k', label: 'avg salary increase' },
-  { num: '94%', label: 'ATS pass rate' },
+  { name: 'Sarah M.', role: 'PM → Director', quote: 'The fit review told me I was a weak match before I wasted 2 hours. Found a better role through Folio a week later.' },
+  { name: 'James K.', role: 'Grad → SWE', quote: 'I was missing 8 key ATS terms. Fixed them. Got 3× more callbacks the next week.' },
+  { name: 'Rachel T.', role: 'Manager → Director', quote: 'I walked into the interview knowing their Q3 strategy. The hiring team was visibly surprised.' },
 ]
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-parchment-100 overflow-hidden">
+    <div className="min-h-screen" style={{ background: 'var(--surface-1)', fontFamily: 'var(--font-sans)' }}>
 
-      {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-parchment-300/60">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-serif text-xl text-gray-900">Folio</span>
-            <span className="text-[9px] font-bold tracking-[2.5px] text-forest-600 uppercase mt-1">CV Builder</span>
+      {/* ── NAV ─────────────────────────────────────────── */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        background: 'rgba(247,249,247,0.85)', backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--ink-100)',
+      }}>
+        <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>Folio</span>
+            <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: 'var(--forest-500)', textTransform: 'uppercase' }}>CV Builder</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-gray-500">
-            <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
-            <a href="#testimonials" className="hover:text-gray-900 transition-colors">Reviews</a>
+          <div style={{ display: 'flex', gap: 32, fontSize: 13, fontWeight: 500, color: 'var(--ink-400)' }} className="hidden md:flex">
+            {['#features', '#pricing', '#reviews'].map((h, i) => (
+              <a key={h} href={h} style={{ color: 'var(--ink-400)', textDecoration: 'none', transition: 'color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink-900)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-400)')}>
+                {['Features', 'Pricing', 'Reviews'][i]}
+              </a>
+            ))}
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth" className="text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-2">Sign in</Link>
-            <Link href="/auth?mode=signup" className="text-sm font-semibold bg-forest-500 text-white px-4 py-2 rounded-lg hover:bg-forest-600 transition-colors">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link href="/auth" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-500)', padding: '8px 14px', textDecoration: 'none', borderRadius: 10, transition: 'color 0.15s' }}>Sign in</Link>
+            <Link href="/auth?mode=signup" style={{ fontSize: 13, fontWeight: 700, background: 'var(--forest-500)', color: '#fff', padding: '9px 18px', borderRadius: 12, textDecoration: 'none', letterSpacing: '-0.01em', boxShadow: '0 1px 2px rgba(0,0,0,0.1), 0 4px 12px rgba(30,110,69,0.25)', transition: 'all 0.15s' }}>
               Get started free
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="relative pt-36 pb-24 px-6 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-forest-100 rounded-full blur-3xl opacity-40" />
-          <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-amber-50 rounded-full blur-3xl opacity-60" />
+      {/* ── HERO ────────────────────────────────────────── */}
+      <section style={{ paddingTop: 130, paddingBottom: 80, paddingLeft: 24, paddingRight: 24, overflow: 'hidden', position: 'relative' }}>
+        {/* Soft background orbs */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 60, left: '15%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(30,110,69,0.08) 0%, transparent 70%)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', top: 100, right: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(212,137,10,0.06) 0%, transparent 70%)', borderRadius: '50%' }} />
         </div>
 
-        <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-forest-50 border border-forest-200 text-forest-700 rounded-full px-4 py-1.5 text-xs font-semibold mb-8">
+        <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+          {/* Pill badge */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--forest-50)', border: '1.5px solid var(--forest-200)', borderRadius: 99, padding: '6px 16px', marginBottom: 32, fontSize: 12, fontWeight: 700, color: 'var(--forest-600)', letterSpacing: '0.02em' }}>
             <Sparkles size={12} />
-            Powered by Claude AI — the most capable model available
+            Powered by Claude — Anthropic's most capable AI
           </div>
 
-          <h1 className="font-serif text-5xl md:text-7xl font-light leading-[1.1] text-gray-900 mb-6 text-balance">
-            Your career,<br />
-            <em className="text-forest-600">perfectly positioned</em>
+          {/* Headline */}
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(42px, 7vw, 76px)', fontWeight: 700, lineHeight: 1.06, letterSpacing: '-0.03em', color: 'var(--ink-900)', marginBottom: 24, textWrap: 'balance' }}>
+            Land your next role<br />
+            <em style={{ color: 'var(--forest-500)', fontStyle: 'italic' }}>with total confidence</em>
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl mx-auto text-balance">
-            ATS-optimised CVs, intelligent cover letters, live company research,
-            and brutally honest fit reviews — tailored to the exact role you want.
+          <p style={{ fontSize: 18, fontWeight: 400, color: 'var(--ink-400)', lineHeight: 1.7, maxWidth: 580, margin: '0 auto 36px', textWrap: 'balance' }}>
+            ATS-optimised CVs, tailored cover letters, live company research, and brutally honest fit reviews — built around the exact role you want.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/auth" className="group inline-flex items-center gap-2 bg-forest-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-forest-600 transition-all duration-200 shadow-lg text-sm">
-              Start building for free
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          {/* CTAs */}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
+            <Link href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--forest-500)', color: '#fff', padding: '14px 28px', borderRadius: 14, fontWeight: 700, fontSize: 15, textDecoration: 'none', letterSpacing: '-0.01em', boxShadow: '0 2px 4px rgba(0,0,0,0.1), 0 8px 24px rgba(30,110,69,0.3)', transition: 'all 0.2s' }}>
+              Start building for free <ArrowRight size={16} />
             </Link>
-            <Link href="#features" className="inline-flex items-center gap-2 bg-white border border-parchment-300 text-gray-600 px-8 py-4 rounded-xl font-semibold hover:border-forest-300 hover:text-forest-700 transition-all duration-200 text-sm">
-              See how it works
-              <ChevronDown size={16} />
-            </Link>
+            <a href="#features" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--surface-0)', color: 'var(--ink-600)', padding: '14px 24px', borderRadius: 14, fontWeight: 600, fontSize: 15, textDecoration: 'none', border: '1.5px solid var(--ink-100)', transition: 'all 0.2s' }}>
+              See all features <ChevronDown size={16} />
+            </a>
           </div>
 
-          <div className="mt-10 flex items-center justify-center gap-2 text-sm text-gray-400">
-            <div className="flex -space-x-2">
-              {['#2d5a3d','#4da472','#7fc29a','#b3dbc2','#d9ede0'].map((c, i) => (
-                <div key={i} className="w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold" style={{ background: c }}>
+          {/* Social proof */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--ink-400)', fontSize: 13 }}>
+            <div style={{ display: 'flex' }}>
+              {['#1e6e45','#2d8a57','#4a9e6e','#72b893','#a8d4ba'].map((bg, i) => (
+                <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: bg, border: '2px solid white', marginLeft: i > 0 ? -8 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'white', fontWeight: 700 }}>
                   {String.fromCharCode(65 + i)}
                 </div>
               ))}
             </div>
-            <span>Join <strong className="text-gray-600">2,400+</strong> professionals landing better roles</span>
+            <span>Trusted by <strong style={{ color: 'var(--ink-700)' }}>2,400+</strong> professionals</span>
           </div>
         </div>
 
-        {/* Preview card */}
-        <div className="relative max-w-3xl mx-auto mt-20">
-          <div className="bg-white rounded-2xl shadow-card border border-parchment-300 overflow-hidden">
-            <div className="bg-parchment-200 px-5 py-3 flex items-center gap-2 border-b border-parchment-300">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-forest-400" />
+        {/* App preview mockup */}
+        <div style={{ maxWidth: 860, margin: '56px auto 0', position: 'relative' }}>
+          <div style={{ background: 'var(--surface-0)', borderRadius: 20, border: '1px solid var(--ink-100)', boxShadow: '0 4px 8px rgba(0,0,0,0.06), 0 24px 64px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+            {/* Window chrome */}
+            <div style={{ background: 'var(--surface-2)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--ink-100)' }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {['#ff5f57','#ffbd2e','#28c840'].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />)}
               </div>
-              <div className="flex-1 bg-white/60 rounded-md py-1 px-3 text-xs text-gray-400 mx-2">folio.cv/app</div>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.7)', borderRadius: 7, padding: '5px 12px', fontSize: 11, color: 'var(--ink-400)', margin: '0 8px', fontFamily: 'var(--font-mono)' }}>folio.cv/app</div>
             </div>
-            <div className="p-6 md:p-8">
-              <div className="flex items-start justify-between mb-6">
+            {/* Content */}
+            <div style={{ padding: '28px 32px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <div className="text-[10px] font-bold tracking-[2px] text-forest-600 uppercase mb-1">AI-generated · ATS optimised</div>
-                  <div className="font-serif text-xl text-gray-900">Senior Product Manager — Stripe</div>
-                  <div className="text-sm text-gray-400 mt-1">Fit score: <span className="text-forest-600 font-semibold">87/100</span> · 3 keyword gaps found</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--forest-500)', marginBottom: 6 }}>AI-generated · ATS optimised</div>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em', marginBottom: 4 }}>Senior Product Manager — Stripe</div>
+                  <div style={{ fontSize: 13, color: 'var(--ink-400)' }}>Fit score: <span style={{ color: 'var(--forest-500)', fontWeight: 700 }}>87/100</span> · 3 keyword gaps identified</div>
                 </div>
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-forest-50">
-                  <svg viewBox="0 0 40 40" width="40" height="40">
-                    <circle cx="20" cy="20" r="16" fill="none" stroke="#e8f0eb" strokeWidth="3" />
-                    <circle cx="20" cy="20" r="16" fill="none" stroke="#2d5a3d" strokeWidth="3"
-                      strokeDasharray="100.5" strokeDashoffset="13" strokeLinecap="round"
-                      transform="rotate(-90 20 20)" />
-                    <text x="20" y="25" textAnchor="middle" fontSize="10" fontWeight="600" fill="#2d5a3d">87</text>
+                {/* Score ring */}
+                <div style={{ flexShrink: 0 }}>
+                  <svg viewBox="0 0 72 72" width="72" height="72">
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="var(--ink-100)" strokeWidth="5" />
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="var(--forest-500)" strokeWidth="5"
+                      strokeLinecap="round" strokeDasharray="175.9" strokeDashoffset="23"
+                      transform="rotate(-90 36 36)" />
+                    <text x="36" y="33" textAnchor="middle" fontSize="16" fontWeight="800" fill="var(--forest-600)" fontFamily="var(--font-serif)">87</text>
+                    <text x="36" y="46" textAnchor="middle" fontSize="9" fill="var(--ink-400)" fontFamily="var(--font-sans)">/100</text>
                   </svg>
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="h-3 bg-parchment-200 rounded-full w-full" />
-                <div className="h-3 bg-parchment-200 rounded-full w-5/6" />
-                <div className="h-3 bg-parchment-200 rounded-full w-4/6 mb-4" />
-                <div className="h-2.5 bg-forest-100 rounded-full w-full" />
-                <div className="h-2.5 bg-forest-100 rounded-full w-11/12" />
-                <div className="h-2.5 bg-parchment-200 rounded-full w-full" />
-                <div className="h-2.5 bg-parchment-200 rounded-full w-3/4" />
+              {/* CV skeleton */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 20 }}>
+                {[1, 0.85, 0.7, 1, 0.9, 0.75].map((w, i) => (
+                  <div key={i} style={{ height: i % 3 === 0 ? 11 : 9, background: i < 3 ? 'var(--forest-100)' : 'var(--surface-2)', borderRadius: 6, width: `${w * 100}%` }} />
+                ))}
               </div>
-              <div className="flex flex-wrap gap-2 mt-6">
-                {['✓ ATS keywords matched','✓ Company research added','✓ Achievement selected','⚠ 3 flags to address'].map((t, i) => (
-                  <span key={i} className={`text-xs px-3 py-1 rounded-full font-medium ${t.startsWith('⚠') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-forest-50 text-forest-700 border border-forest-200'}`}>{t}</span>
+              {/* Badges */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[
+                  { t: '✓ ATS keywords matched', green: true },
+                  { t: '✓ Company research applied', green: true },
+                  { t: '✓ Top 3 achievements selected', green: true },
+                  { t: '⚠ 3 flags to review', green: false },
+                ].map(({ t, green }) => (
+                  <span key={t} style={{ fontSize: 11, fontWeight: 600, padding: '4px 11px', borderRadius: 99, background: green ? 'var(--forest-50)' : 'var(--amber-light)', color: green ? 'var(--forest-600)' : 'var(--amber)', border: `1.5px solid ${green ? 'var(--forest-200)' : 'rgba(212,137,10,0.25)'}` }}>{t}</span>
                 ))}
               </div>
             </div>
           </div>
+
+          {/* Floating insight card — right */}
+          <div style={{ position: 'absolute', right: -24, top: 32, background: 'var(--surface-0)', borderRadius: 14, border: '1px solid var(--ink-100)', padding: '14px 16px', width: 200, boxShadow: '0 4px 24px rgba(0,0,0,0.1)' }} className="hidden lg:block">
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-300)', marginBottom: 5 }}>Company insight</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-700)', lineHeight: 1.5, fontWeight: 500 }}>Stripe raised $600M Series I. Expanding into APAC payments infrastructure.</div>
+          </div>
+
+          {/* Floating keyword card — left */}
+          <div style={{ position: 'absolute', left: -24, bottom: 40, background: 'var(--surface-0)', borderRadius: 14, border: '1px solid var(--ink-100)', padding: '14px 16px', width: 190, boxShadow: '0 4px 24px rgba(0,0,0,0.1)' }} className="hidden lg:block">
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-300)', marginBottom: 5 }}>Keyword gap</div>
+            <div style={{ fontSize: 12, color: '#c0392b', lineHeight: 1.5, fontWeight: 500 }}>Missing: "API-first", "payment infrastructure", "merchant acquiring"</div>
+          </div>
         </div>
       </section>
 
-      {/* STATS */}
-      <section className="py-16 px-6 bg-white border-y border-parchment-300">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STATS.map(s => (
-            <div key={s.label} className="text-center">
-              <div className="font-serif text-4xl md:text-5xl font-light text-forest-600 mb-2">{s.num}</div>
-              <div className="text-sm text-gray-400">{s.label}</div>
+      {/* ── STATS ───────────────────────────────────────── */}
+      <section style={{ background: 'var(--forest-700)', padding: '48px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }} className="grid grid-cols-2 md:grid-cols-4">
+          {[['3×', 'more callbacks'], ['47%', 'faster job search'], ['£8k', 'avg salary uplift'], ['94%', 'ATS pass rate']].map(([n, l]) => (
+            <div key={l} style={{ textAlign: 'center', padding: '20px 12px' }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 44, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1 }}>{n}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 6, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{l}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section id="features" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="text-[11px] font-bold tracking-[2px] text-forest-600 uppercase mb-4">Everything you need</div>
-            <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-4">Six tools. One application.</h2>
-            <p className="text-lg text-gray-400 max-w-xl mx-auto">Every tool shares the same job description and your profile — no copy-pasting, no context-switching.</p>
+      {/* ── FEATURES ────────────────────────────────────── */}
+      <section id="features" style={{ padding: '96px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: 'var(--forest-500)', textTransform: 'uppercase', marginBottom: 14 }}>Eight tools. One platform.</div>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', marginBottom: 14, lineHeight: 1.1 }}>
+              Every tool shares your profile.<br />
+              <span style={{ color: 'var(--forest-500)', fontStyle: 'italic' }}>No copy-pasting. Ever.</span>
+            </h2>
+            <p style={{ fontSize: 16, color: 'var(--ink-400)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>Paste a job description once. Every output — CV, letter, score, prep — is generated from the same data.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f, i) => (
-              <div key={f.label} className="group bg-white rounded-2xl p-6 border border-parchment-300 hover:border-forest-300 hover:shadow-card-hover transition-all duration-300">
-                <div className="w-10 h-10 rounded-xl bg-forest-50 flex items-center justify-center mb-4 group-hover:bg-forest-100 transition-colors">
-                  <f.icon size={20} className="text-forest-600" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+            {FEATURES.map(({ icon: Icon, label, desc }) => (
+              <div key={label} style={{ background: 'var(--surface-0)', border: '1.5px solid var(--ink-100)', borderRadius: 16, padding: '22px 22px', transition: 'all 0.2s', cursor: 'default' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--forest-300)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(30,110,69,0.1)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ink-100)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--forest-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                  <Icon size={18} color="var(--forest-500)" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2 text-[15px]">{f.label}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+                <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink-900)', marginBottom: 6, letterSpacing: '-0.01em' }}>{label}</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-400)', lineHeight: 1.6 }}>{desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="py-24 px-6 bg-forest-500">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="font-serif text-4xl font-light text-white mb-4">From job posting to application in 3 minutes</h2>
-            <p className="text-forest-200 text-lg">Most users send tailored applications in under 4 minutes.</p>
+      {/* ── HOW IT WORKS ────────────────────────────────── */}
+      <section style={{ background: 'var(--forest-500)', padding: '96px 24px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 12 }}>From job posting to application<br />in 3 minutes</h2>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', fontWeight: 400 }}>Most users send tailored applications in under 4 minutes.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }} className="grid grid-cols-1 md:grid-cols-3">
             {[
-              { n: '01', title: 'Build your profile', desc: 'Add your experience once. Every achievement becomes part of your permanent pool.' },
-              { n: '02', title: 'Paste the job', desc: 'Drop in a URL or paste the description. Folio researches the company live.' },
-              { n: '03', title: 'Generate & submit', desc: 'Get a tailored CV, cover letter, and fit score. Know your chances before you apply.' },
-            ].map(step => (
-              <div key={step.n} className="text-center">
-                <div className="font-serif text-5xl font-light text-forest-300 mb-4">{step.n}</div>
-                <h3 className="text-white font-semibold text-lg mb-2">{step.title}</h3>
-                <p className="text-forest-200 text-sm leading-relaxed">{step.desc}</p>
+              { n: '01', title: 'Build your profile', desc: 'Add your experience once. Every achievement becomes your permanent pool.' },
+              { n: '02', title: 'Paste any job', desc: 'URL or description. Folio researches the company and builds context live.' },
+              { n: '03', title: 'Generate & submit', desc: 'Tailored CV, cover letter, and fit score. Know your odds before you apply.' },
+            ].map(s => (
+              <div key={s.n} style={{ textAlign: 'center', padding: '32px 28px' }}>
+                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 56, fontWeight: 700, color: 'rgba(255,255,255,0.2)', lineHeight: 1, marginBottom: 16 }}>{s.n}</div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 8, letterSpacing: '-0.01em' }}>{s.title}</div>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65 }}>{s.desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section id="testimonials" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-4">Real results</h2>
+      {/* ── TESTIMONIALS ────────────────────────────────── */}
+      <section id="reviews" style={{ padding: '96px 24px' }}>
+        <div style={{ maxWidth: 980, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', lineHeight: 1.1 }}>Real results</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
             {TESTIMONIALS.map(t => (
-              <div key={t.name} className="bg-white rounded-2xl p-6 border border-parchment-300 shadow-card">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, j) => <Star key={j} size={14} fill="#2d5a3d" className="text-forest-500" />)}
+              <div key={t.name} style={{ background: 'var(--surface-0)', border: '1.5px solid var(--ink-100)', borderRadius: 18, padding: '28px 26px' }}>
+                <div style={{ display: 'flex', gap: 3, marginBottom: 16 }}>
+                  {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="var(--forest-500)" color="var(--forest-500)" />)}
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed mb-5 italic">&ldquo;{t.quote}&rdquo;</p>
+                <p style={{ fontSize: 15, color: 'var(--ink-600)', lineHeight: 1.7, marginBottom: 20, fontStyle: 'italic' }}>&ldquo;{t.quote}&rdquo;</p>
                 <div>
-                  <div className="font-semibold text-sm text-gray-900">{t.name}</div>
-                  <div className="text-xs text-forest-600 mt-0.5">{t.role}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink-900)' }}>{t.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--forest-500)', marginTop: 2, fontWeight: 600 }}>{t.role}</div>
                 </div>
               </div>
             ))}
@@ -249,74 +280,71 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="py-24 px-6 bg-parchment-200">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-4">Simple pricing</h2>
-            <p className="text-gray-400 text-lg">One successful salary negotiation pays for a year of Career Boost.</p>
+      {/* ── PRICING ─────────────────────────────────────── */}
+      <section id="pricing" style={{ background: 'var(--surface-2)', padding: '96px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', marginBottom: 10, lineHeight: 1.1 }}>Simple, honest pricing</h2>
+            <p style={{ fontSize: 15, color: 'var(--ink-400)' }}>One successful salary negotiation covers a year of Boost.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
             {PLANS.map(plan => (
-              <div key={plan.name} className={`relative rounded-2xl p-7 flex flex-col ${plan.highlight ? 'bg-forest-500 text-white' : 'bg-white border border-parchment-300'}`}>
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-amber-400 text-amber-900 text-[11px] font-bold px-3 py-1 rounded-full tracking-wider uppercase">Best value</span>
-                  </div>
+              <div key={plan.name} style={{ position: 'relative', background: plan.highlight ? 'var(--forest-500)' : 'var(--surface-0)', border: plan.highlight ? 'none' : '1.5px solid var(--ink-100)', borderRadius: 20, padding: '28px 24px', display: 'flex', flexDirection: 'column', boxShadow: plan.highlight ? '0 8px 32px rgba(30,110,69,0.35)' : 'none', marginTop: plan.highlight ? 0 : 0 }}>
+                {plan.badge && (
+                  <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#d4890a', color: '#fff', borderRadius: 99, padding: '4px 14px', fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{plan.badge}</div>
                 )}
-                <div className={`text-[11px] font-bold tracking-[2px] uppercase mb-2 ${plan.highlight ? 'text-forest-200' : 'text-gray-400'}`}>{plan.name}</div>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className={`font-serif text-4xl font-light ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>{plan.price}</span>
-                  {plan.period && <span className={`text-sm ${plan.highlight ? 'text-forest-200' : 'text-gray-400'}`}>{plan.period}</span>}
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: plan.highlight ? 'rgba(255,255,255,0.6)' : 'var(--ink-400)', marginBottom: 10 }}>{plan.name}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: 44, fontWeight: 700, letterSpacing: '-0.03em', color: plan.highlight ? '#fff' : 'var(--ink-900)', lineHeight: 1 }}>{plan.price}</span>
+                  {plan.period && <span style={{ fontSize: 13, color: plan.highlight ? 'rgba(255,255,255,0.55)' : 'var(--ink-400)', fontWeight: 500 }}>{plan.period}</span>}
                 </div>
-                <p className={`text-sm mb-6 ${plan.highlight ? 'text-forest-100' : 'text-gray-400'}`}>{plan.desc}</p>
-                <ul className="space-y-2.5 mb-8 flex-1">
+                <p style={{ fontSize: 13, color: plan.highlight ? 'rgba(255,255,255,0.7)' : 'var(--ink-400)', marginBottom: 22, lineHeight: 1.55 }}>{plan.desc}</p>
+                <ul style={{ listStyle: 'none', padding: 0, marginBottom: 24, flex: 1, display: 'flex', flexDirection: 'column', gap: 9 }}>
                   {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm">
-                      <CheckCircle size={15} className={plan.highlight ? 'text-forest-200' : 'text-forest-500'} />
-                      <span className={plan.highlight ? 'text-forest-50' : 'text-gray-600'}>{f}</span>
+                    <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13 }}>
+                      <CheckCircle size={14} color={plan.highlight ? 'rgba(255,255,255,0.7)' : 'var(--forest-500)'} />
+                      <span style={{ color: plan.highlight ? 'rgba(255,255,255,0.9)' : 'var(--ink-600)' }}>{f}</span>
                     </li>
                   ))}
                 </ul>
-                <Link href={plan.href} className={`w-full py-3 rounded-xl font-semibold text-sm text-center transition-all duration-200 ${plan.highlight ? 'bg-white text-forest-700 hover:bg-forest-50' : 'bg-forest-500 text-white hover:bg-forest-600'}`}>
-                  {plan.cta} <ArrowRight className="inline ml-1" size={14} />
+                <Link href={plan.href} style={{ display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none', letterSpacing: '-0.01em', background: plan.highlight ? '#fff' : 'var(--forest-500)', color: plan.highlight ? 'var(--forest-600)' : '#fff', transition: 'all 0.15s' }}>
+                  {plan.cta} →
                 </Link>
               </div>
             ))}
           </div>
-          <p className="text-center text-sm text-gray-400 mt-8">Cancel anytime · No contracts · VAT included</p>
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-400)', marginTop: 24, fontWeight: 500 }}>Cancel anytime · No contracts · VAT included</p>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-6 bg-white">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-6 text-balance">
-            Stop applying blindly.<br /><em className="text-forest-600">Start applying strategically.</em>
+      {/* ── FINAL CTA ───────────────────────────────────── */}
+      <section style={{ padding: '96px 24px', background: 'var(--surface-0)' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', lineHeight: 1.08, marginBottom: 18, textWrap: 'balance' }}>
+            Stop applying blindly.<br />
+            <em style={{ color: 'var(--forest-500)' }}>Start applying strategically.</em>
           </h2>
-          <p className="text-gray-400 text-lg mb-8">Build your profile once. Apply to every role with a tailored CV in under 3 minutes.</p>
-          <Link href="/auth" className="group inline-flex items-center gap-2 bg-forest-500 text-white px-10 py-4 rounded-xl font-semibold text-sm hover:bg-forest-600 transition-all duration-200 shadow-lg">
-            Get started free
-            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          <p style={{ fontSize: 16, color: 'var(--ink-400)', marginBottom: 32, lineHeight: 1.7 }}>Build your profile once. Tailor every application in under 3 minutes.</p>
+          <Link href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'var(--forest-500)', color: '#fff', padding: '15px 32px', borderRadius: 14, fontWeight: 700, fontSize: 16, textDecoration: 'none', letterSpacing: '-0.01em', boxShadow: '0 4px 8px rgba(0,0,0,0.1), 0 16px 40px rgba(30,110,69,0.3)', transition: 'all 0.2s' }}>
+            Get started — it&apos;s free <ArrowRight size={18} />
           </Link>
-          <p className="text-sm text-gray-400 mt-4">Free forever · No card required</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-300)', marginTop: 14, fontWeight: 500 }}>No card required · Free forever</p>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-parchment-300 py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-serif text-lg text-gray-900">Folio</span>
-            <span className="text-gray-300">·</span>
-            <span className="text-sm text-gray-400">AI-Powered CV Builder</span>
+      {/* ── FOOTER ──────────────────────────────────────── */}
+      <footer style={{ borderTop: '1px solid var(--ink-100)', padding: '32px 24px', background: 'var(--surface-1)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>Folio</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-400)', fontWeight: 500 }}>AI-Powered CV Builder</span>
           </div>
-          <div className="flex gap-6 text-sm text-gray-400">
-            <Link href="/privacy" className="hover:text-gray-700 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-gray-700 transition-colors">Terms</Link>
-            <a href="mailto:hello@folio.cv" className="hover:text-gray-700 transition-colors">Contact</a>
+          <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--ink-400)', fontWeight: 500 }}>
+            <Link href="/privacy" style={{ color: 'var(--ink-400)', textDecoration: 'none' }}>Privacy</Link>
+            <Link href="/terms" style={{ color: 'var(--ink-400)', textDecoration: 'none' }}>Terms</Link>
+            <a href="mailto:hello@folio.cv" style={{ color: 'var(--ink-400)', textDecoration: 'none' }}>Contact</a>
           </div>
-          <p className="text-sm text-gray-400">© {new Date().getFullYear()} Folio</p>
+          <p style={{ fontSize: 12, color: 'var(--ink-300)', fontWeight: 500 }}>© {new Date().getFullYear()} Folio</p>
         </div>
       </footer>
 
