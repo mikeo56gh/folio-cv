@@ -108,6 +108,8 @@ Crons require Vercel Pro ($20/month). If on free Hobby plan, use cron-job.org in
 4. Chrome → `chrome://extensions` → Developer mode ON → Load unpacked → select the folder
 5. To publish: chrome.google.com/webstore/devconsole → $5 one-time → upload zip of the folder
 
+
+
 ---
 
 ## Full deploy checklist
