@@ -177,11 +177,14 @@ function AppShell() {
             )}
 
             {/* Progress */}
-            <div className="flex items-center gap-1">
-              {progress.map((ok, i) => (
-                <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${ok ? 'bg-forest-500 scale-110' : 'bg-parchment-400'}`} />
-              ))}
-              <span className="text-[10px] text-gray-400 ml-1 hidden sm:inline">{progressCount}/4</span>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-20 h-1.5 bg-parchment-300 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-forest-500 rounded-full transition-all duration-500"
+                  style={{ width: `${(progressCount / 4) * 100}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-medium text-gray-500">{progressCount}/4</span>
             </div>
 
             {/* Actions */}
