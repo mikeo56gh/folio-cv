@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import { createClient } from '@supabase/supabase-js'
 import { toast } from 'sonner'
 
-const supabase = createClient(
+const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
@@ -190,7 +190,7 @@ export function AppProvider({ children, session }: { children: React.ReactNode, 
   }
 
   async function signOut() {
-    await supabase.auth.signOut()
+    await getSupabase().auth.signOut()
     window.location.href = '/'
   }
 

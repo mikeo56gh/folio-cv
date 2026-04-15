@@ -1,6 +1,4 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { ArrowRight, CheckCircle, Zap, Shield, BarChart2, Search, FileText, Mail, Star, ChevronDown, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
@@ -25,7 +23,6 @@ const PLANS = [
     desc: 'Most people find a role in 3 months. Pay once, stop when you land.',
     features: ['Everything in Pro — unlimited', 'LinkedIn profile optimiser', 'Weekly job alerts', 'Company research', 'Interview prep', 'No monthly commitment'],
     cta: 'Start Sprint', href: '/auth?plan=sprint', highlight: true,
-    badge: 'Best value',
   },
   {
     name: 'Pro', price: '£9', period: '/mo',
@@ -43,8 +40,8 @@ const PLANS = [
 
 const TESTIMONIALS = [
   { name: 'Sarah M.', role: 'Product Manager → Director', quote: 'The fit review told me I was a weak match before I wasted 2 hours on an application. Ended up landing a better role through Folio a week later.' },
-  { name: 'James K.', role: 'Grad → Software Engineer', quote: "The keyword gap analysis was a game changer. I was missing 8 key terms from my CV that ATS would filter on. Got 3x more callbacks after fixing it." },
-  { name: 'Rachel T.', role: 'Senior Manager → Director', quote: "The company research feature is insane. I walked into my interview knowing things about their Q3 strategy that surprised the hiring team." },
+  { name: 'James K.', role: 'Grad → Software Engineer', quote: 'The keyword gap analysis was a game changer. I was missing 8 key terms from my CV that ATS would filter on. Got 3x more callbacks after fixing it.' },
+  { name: 'Rachel T.', role: 'Senior Manager → Director', quote: 'The company research feature is insane. I walked into my interview knowing things about their Q3 strategy that surprised the hiring team.' },
 ]
 
 const STATS = [
@@ -54,89 +51,10 @@ const STATS = [
   { num: '94%', label: 'ATS pass rate' },
 ]
 
-function AnimatedCounter({ target, suffix = '' }: { target: string, suffix?: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className="font-serif text-4xl md:text-5xl font-light text-forest-600"
-    >
-      {target}{suffix}
-    </motion.div>
-  )
-}
-
-function FeatureCard({ icon: Icon, label, desc, i }: any) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: i * 0.08, duration: 0.5 }}
-      className="group relative bg-white rounded-2xl p-6 border border-parchment-300 hover:border-forest-300 hover:shadow-card-hover transition-all duration-300"
-    >
-      <div className="w-10 h-10 rounded-xl bg-forest-50 flex items-center justify-center mb-4 group-hover:bg-forest-100 transition-colors">
-        <Icon size={20} className="text-forest-600" />
-      </div>
-      <h3 className="font-semibold text-gray-900 mb-2 text-[15px]">{label}</h3>
-      <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
-    </motion.div>
-  )
-}
-
-function PlanCard({ plan, i }: { plan: typeof PLANS[0], i: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: i * 0.12, duration: 0.5 }}
-      className={`relative rounded-2xl p-7 flex flex-col ${plan.highlight
-        ? 'bg-forest-500 text-white shadow-green-glow'
-        : 'bg-white border border-parchment-300'
-      }`}
-    >
-      {plan.highlight && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-amber-400 text-amber-900 text-[11px] font-bold px-3 py-1 rounded-full tracking-wider uppercase">Most popular</span>
-        </div>
-      )}
-      <div className={`text-[11px] font-bold tracking-[2px] uppercase mb-2 ${plan.highlight ? 'text-forest-200' : 'text-gray-400'}`}>{plan.name}</div>
-      <div className="flex items-baseline gap-1 mb-1">
-        <span className={`font-serif text-4xl font-light ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>{plan.price}</span>
-        {plan.period && <span className={`text-sm ${plan.highlight ? 'text-forest-200' : 'text-gray-400'}`}>{plan.period}</span>}
-      </div>
-      <p className={`text-sm mb-6 ${plan.highlight ? 'text-forest-100' : 'text-gray-400'}`}>{plan.desc}</p>
-      <ul className="space-y-2.5 mb-8 flex-1">
-        {plan.features.map(f => (
-          <li key={f} className="flex items-center gap-2.5 text-sm">
-            <CheckCircle size={15} className={plan.highlight ? 'text-forest-200' : 'text-forest-500'} />
-            <span className={plan.highlight ? 'text-forest-50' : 'text-gray-600'}>{f}</span>
-          </li>
-        ))}
-      </ul>
-      <Link
-        href={plan.href}
-        className={`w-full py-3 rounded-xl font-semibold text-sm text-center transition-all duration-200 ${plan.highlight
-          ? 'bg-white text-forest-700 hover:bg-forest-50'
-          : 'bg-forest-500 text-white hover:bg-forest-600'
-        }`}
-      >
-        {plan.cta} <ArrowRight className="inline ml-1" size={14} />
-      </Link>
-    </motion.div>
-  )
-}
-
 export default function LandingPage() {
-  const { scrollY } = useScroll()
-  const heroY = useTransform(scrollY, [0, 400], [0, -60])
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0])
-
   return (
     <div className="min-h-screen bg-parchment-100 overflow-hidden">
+
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-parchment-300/60">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -160,78 +78,39 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="relative pt-36 pb-24 px-6 overflow-hidden">
-        {/* Background elements */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-forest-100 rounded-full blur-3xl opacity-40 animate-pulse-slow" />
-          <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-amber-50 rounded-full blur-3xl opacity-60 animate-pulse-slow animation-delay-300" />
-          <div className="absolute top-1/2 left-0 w-64 h-64 bg-parchment-300 rounded-full blur-3xl opacity-30" />
+          <div className="absolute top-20 left-1/4 w-96 h-96 bg-forest-100 rounded-full blur-3xl opacity-40" />
+          <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-amber-50 rounded-full blur-3xl opacity-60" />
         </div>
 
-        <motion.div
-          style={{ y: heroY, opacity: heroOpacity }}
-          className="relative max-w-4xl mx-auto text-center"
-        >
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-forest-50 border border-forest-200 text-forest-700 rounded-full px-4 py-1.5 text-xs font-semibold mb-8"
-          >
+        <div className="relative max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-forest-50 border border-forest-200 text-forest-700 rounded-full px-4 py-1.5 text-xs font-semibold mb-8">
             <Sparkles size={12} />
             Powered by Claude AI — the most capable model available
-          </motion.div>
+          </div>
 
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="font-serif text-5xl md:text-7xl font-light leading-[1.1] text-gray-900 mb-6 text-balance"
-          >
+          <h1 className="font-serif text-5xl md:text-7xl font-light leading-[1.1] text-gray-900 mb-6 text-balance">
             Your career,<br />
             <em className="text-forest-600">perfectly positioned</em>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-lg md:text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl mx-auto text-balance"
-          >
-            ATS-optimised CVs, intelligent cover letters, live company research, 
+          <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl mx-auto text-balance">
+            ATS-optimised CVs, intelligent cover letters, live company research,
             and brutally honest fit reviews — tailored to the exact role you want.
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-3 justify-center"
-          >
-            <Link
-              href="/auth"
-              className="group inline-flex items-center gap-2 bg-forest-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-forest-600 transition-all duration-200 shadow-lg hover:shadow-green-glow text-sm"
-            >
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/auth" className="group inline-flex items-center gap-2 bg-forest-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-forest-600 transition-all duration-200 shadow-lg text-sm">
               Start building for free
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              href="#features"
-              className="inline-flex items-center gap-2 bg-white border border-parchment-300 text-gray-600 px-8 py-4 rounded-xl font-semibold hover:border-forest-300 hover:text-forest-700 transition-all duration-200 text-sm"
-            >
+            <Link href="#features" className="inline-flex items-center gap-2 bg-white border border-parchment-300 text-gray-600 px-8 py-4 rounded-xl font-semibold hover:border-forest-300 hover:text-forest-700 transition-all duration-200 text-sm">
               See how it works
               <ChevronDown size={16} />
             </Link>
-          </motion.div>
+          </div>
 
-          {/* Social proof */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-10 flex items-center justify-center gap-2 text-sm text-gray-400"
-          >
+          <div className="mt-10 flex items-center justify-center gap-2 text-sm text-gray-400">
             <div className="flex -space-x-2">
               {['#2d5a3d','#4da472','#7fc29a','#b3dbc2','#d9ede0'].map((c, i) => (
                 <div key={i} className="w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold" style={{ background: c }}>
@@ -240,18 +119,12 @@ export default function LandingPage() {
               ))}
             </div>
             <span>Join <strong className="text-gray-600">2,400+</strong> professionals landing better roles</span>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* Preview card */}
-        <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="relative max-w-3xl mx-auto mt-20"
-        >
+        <div className="relative max-w-3xl mx-auto mt-20">
           <div className="bg-white rounded-2xl shadow-card border border-parchment-300 overflow-hidden">
-            {/* Header bar */}
             <div className="bg-parchment-200 px-5 py-3 flex items-center gap-2 border-b border-parchment-300">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -260,7 +133,6 @@ export default function LandingPage() {
               </div>
               <div className="flex-1 bg-white/60 rounded-md py-1 px-3 text-xs text-gray-400 mx-2">folio.cv/app</div>
             </div>
-            {/* Content preview */}
             <div className="p-6 md:p-8">
               <div className="flex items-start justify-between mb-6">
                 <div>
@@ -278,7 +150,6 @@ export default function LandingPage() {
                   </svg>
                 </div>
               </div>
-              {/* Fake CV lines */}
               <div className="space-y-2">
                 <div className="h-3 bg-parchment-200 rounded-full w-full" />
                 <div className="h-3 bg-parchment-200 rounded-full w-5/6" />
@@ -288,7 +159,6 @@ export default function LandingPage() {
                 <div className="h-2.5 bg-parchment-200 rounded-full w-full" />
                 <div className="h-2.5 bg-parchment-200 rounded-full w-3/4" />
               </div>
-              {/* Feature pills */}
               <div className="flex flex-wrap gap-2 mt-6">
                 {['✓ ATS keywords matched','✓ Company research added','✓ Achievement selected','⚠ 3 flags to address'].map((t, i) => (
                   <span key={i} className={`text-xs px-3 py-1 rounded-full font-medium ${t.startsWith('⚠') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-forest-50 text-forest-700 border border-forest-200'}`}>{t}</span>
@@ -296,43 +166,17 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-
-          {/* Floating cards */}
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -right-8 top-12 hidden md:block bg-white rounded-xl shadow-card border border-parchment-300 p-4 w-44"
-          >
-            <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Company insight</div>
-            <div className="text-xs font-medium text-gray-700">Stripe raised $600M Series I. Expanding into APAC payments.</div>
-          </motion.div>
-
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            className="absolute -left-8 bottom-16 hidden md:block bg-white rounded-xl shadow-card border border-parchment-300 p-4 w-44"
-          >
-            <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Keyword gap</div>
-            <div className="text-xs font-medium text-red-600">Missing: "payment infrastructure", "API-first"</div>
-          </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       {/* STATS */}
       <section className="py-16 px-6 bg-white border-y border-parchment-300">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STATS.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="text-center"
-            >
+          {STATS.map(s => (
+            <div key={s.label} className="text-center">
               <div className="font-serif text-4xl md:text-5xl font-light text-forest-600 mb-2">{s.num}</div>
               <div className="text-sm text-gray-400">{s.label}</div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -340,18 +184,21 @@ export default function LandingPage() {
       {/* FEATURES */}
       <section id="features" className="py-24 px-6">
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+          <div className="text-center mb-14">
             <div className="text-[11px] font-bold tracking-[2px] text-forest-600 uppercase mb-4">Everything you need</div>
             <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-4">Six tools. One application.</h2>
             <p className="text-lg text-gray-400 max-w-xl mx-auto">Every tool shares the same job description and your profile — no copy-pasting, no context-switching.</p>
-          </motion.div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f, i) => <FeatureCard key={f.label} {...f} i={i} />)}
+            {FEATURES.map((f, i) => (
+              <div key={f.label} className="group bg-white rounded-2xl p-6 border border-parchment-300 hover:border-forest-300 hover:shadow-card-hover transition-all duration-300">
+                <div className="w-10 h-10 rounded-xl bg-forest-50 flex items-center justify-center mb-4 group-hover:bg-forest-100 transition-colors">
+                  <f.icon size={20} className="text-forest-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2 text-[15px]">{f.label}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -359,33 +206,21 @@ export default function LandingPage() {
       {/* HOW IT WORKS */}
       <section className="py-24 px-6 bg-forest-500">
         <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+          <div className="text-center mb-14">
             <h2 className="font-serif text-4xl font-light text-white mb-4">From job posting to application in 3 minutes</h2>
             <p className="text-forest-200 text-lg">Most users send tailored applications in under 4 minutes.</p>
-          </motion.div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { n: '01', title: 'Build your profile', desc: 'Add your experience once. Every achievement becomes part of your permanent pool.' },
               { n: '02', title: 'Paste the job', desc: 'Drop in a URL or paste the description. Folio researches the company live.' },
               { n: '03', title: 'Generate & submit', desc: 'Get a tailored CV, cover letter, and fit score. Know your chances before you apply.' },
-            ].map((step, i) => (
-              <motion.div
-                key={step.n}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="text-center"
-              >
+            ].map(step => (
+              <div key={step.n} className="text-center">
                 <div className="font-serif text-5xl font-light text-forest-300 mb-4">{step.n}</div>
                 <h3 className="text-white font-semibold text-lg mb-2">{step.title}</h3>
                 <p className="text-forest-200 text-sm leading-relaxed">{step.desc}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -394,33 +229,21 @@ export default function LandingPage() {
       {/* TESTIMONIALS */}
       <section id="testimonials" className="py-24 px-6">
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+          <div className="text-center mb-14">
             <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-4">Real results</h2>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white rounded-2xl p-6 border border-parchment-300 shadow-card"
-              >
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map(t => (
+              <div key={t.name} className="bg-white rounded-2xl p-6 border border-parchment-300 shadow-card">
                 <div className="flex gap-0.5 mb-4">
                   {[...Array(5)].map((_, j) => <Star key={j} size={14} fill="#2d5a3d" className="text-forest-500" />)}
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed mb-5 italic">"{t.quote}"</p>
+                <p className="text-sm text-gray-600 leading-relaxed mb-5 italic">&ldquo;{t.quote}&rdquo;</p>
                 <div>
                   <div className="font-semibold text-sm text-gray-900">{t.name}</div>
                   <div className="text-xs text-forest-600 mt-0.5">{t.role}</div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -429,50 +252,54 @@ export default function LandingPage() {
       {/* PRICING */}
       <section id="pricing" className="py-24 px-6 bg-parchment-200">
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+          <div className="text-center mb-14">
             <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-4">Simple pricing</h2>
             <p className="text-gray-400 text-lg">One successful salary negotiation pays for a year of Career Boost.</p>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS.map((p, i) => <PlanCard key={p.name} plan={p} i={i} />)}
           </div>
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center text-sm text-gray-400 mt-8"
-          >
-            Cancel anytime · No contracts · VAT included
-          </motion.p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {PLANS.map(plan => (
+              <div key={plan.name} className={`relative rounded-2xl p-7 flex flex-col ${plan.highlight ? 'bg-forest-500 text-white' : 'bg-white border border-parchment-300'}`}>
+                {plan.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-amber-400 text-amber-900 text-[11px] font-bold px-3 py-1 rounded-full tracking-wider uppercase">Best value</span>
+                  </div>
+                )}
+                <div className={`text-[11px] font-bold tracking-[2px] uppercase mb-2 ${plan.highlight ? 'text-forest-200' : 'text-gray-400'}`}>{plan.name}</div>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className={`font-serif text-4xl font-light ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>{plan.price}</span>
+                  {plan.period && <span className={`text-sm ${plan.highlight ? 'text-forest-200' : 'text-gray-400'}`}>{plan.period}</span>}
+                </div>
+                <p className={`text-sm mb-6 ${plan.highlight ? 'text-forest-100' : 'text-gray-400'}`}>{plan.desc}</p>
+                <ul className="space-y-2.5 mb-8 flex-1">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-2.5 text-sm">
+                      <CheckCircle size={15} className={plan.highlight ? 'text-forest-200' : 'text-forest-500'} />
+                      <span className={plan.highlight ? 'text-forest-50' : 'text-gray-600'}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href={plan.href} className={`w-full py-3 rounded-xl font-semibold text-sm text-center transition-all duration-200 ${plan.highlight ? 'bg-white text-forest-700 hover:bg-forest-50' : 'bg-forest-500 text-white hover:bg-forest-600'}`}>
+                  {plan.cta} <ArrowRight className="inline ml-1" size={14} />
+                </Link>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-gray-400 mt-8">Cancel anytime · No contracts · VAT included</p>
         </div>
       </section>
 
       {/* CTA */}
       <section className="py-24 px-6 bg-white">
         <div className="max-w-2xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-6 text-balance">
-              Stop applying blindly.<br /><em className="text-forest-600">Start applying strategically.</em>
-            </h2>
-            <p className="text-gray-400 text-lg mb-8">Build your profile once. Apply to every role with a tailored CV in under 3 minutes.</p>
-            <Link
-              href="/auth"
-              className="group inline-flex items-center gap-2 bg-forest-500 text-white px-10 py-4 rounded-xl font-semibold text-sm hover:bg-forest-600 transition-all duration-200 shadow-lg hover:shadow-green-glow"
-            >
-              Get started free
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <p className="text-sm text-gray-400 mt-4">Free forever · No card required</p>
-          </motion.div>
+          <h2 className="font-serif text-4xl md:text-5xl font-light text-gray-900 mb-6 text-balance">
+            Stop applying blindly.<br /><em className="text-forest-600">Start applying strategically.</em>
+          </h2>
+          <p className="text-gray-400 text-lg mb-8">Build your profile once. Apply to every role with a tailored CV in under 3 minutes.</p>
+          <Link href="/auth" className="group inline-flex items-center gap-2 bg-forest-500 text-white px-10 py-4 rounded-xl font-semibold text-sm hover:bg-forest-600 transition-all duration-200 shadow-lg">
+            Get started free
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <p className="text-sm text-gray-400 mt-4">Free forever · No card required</p>
         </div>
       </section>
 
@@ -492,6 +319,7 @@ export default function LandingPage() {
           <p className="text-sm text-gray-400">© {new Date().getFullYear()} Folio</p>
         </div>
       </footer>
+
     </div>
   )
 }

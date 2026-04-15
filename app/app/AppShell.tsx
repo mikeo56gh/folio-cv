@@ -16,7 +16,7 @@ import { JobsTab } from './tabs/JobsTab'
 import { TrackerTab } from './tabs/TrackerTab'
 import { HistoryTab } from './tabs/HistoryTab'
 
-const supabase = createClient(
+const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
@@ -286,7 +286,44 @@ function AppShell() {
   )
 }
 
-export default function AppPage({ session }: { session: any }) {
+export default function AppPage() {
+  const [session, setSession] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const supabase = getSupabase()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/auth')
+      } else {
+        setSession(session)
+      }
+      setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.replace('/auth')
+      } else {
+        setSession(session)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router])
+
+  if (loading) return (
+    <div className="min-h-screen bg-parchment-100 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3 text-gray-400">
+        <div className="w-8 h-8 border-2 border-forest-300 border-t-forest-600 rounded-full animate-spin" />
+        <span className="text-sm font-medium">Loading Folio…</span>
+      </div>
+    </div>
+  )
+
+  if (!session) return null
+
   return (
     <AppProvider session={session}>
       <AppShell />
