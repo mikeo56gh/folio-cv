@@ -3,7 +3,7 @@
 ## What's in this package
 
 ```
-folio-v2/ 
+folio-v2/
 ├── app/
 │   ├── page.tsx                    ← Landing page (Sprint plan highlighted)
 │   ├── auth/page.tsx               ← Sign up / sign in / Google OAuth
@@ -107,8 +107,6 @@ Crons require Vercel Pro ($20/month). If on free Hobby plan, use cron-job.org in
 3. Add icons (16px, 48px, 128px) to `chrome-extension/icons/` — Canva free or any image editor
 4. Chrome → `chrome://extensions` → Developer mode ON → Load unpacked → select the folder
 5. To publish: chrome.google.com/webstore/devconsole → $5 one-time → upload zip of the folder
-
-
 
 ---
 
