@@ -1,5 +1,5 @@
-import { queryOne } from '../../../lib/db'
-import { getAuthUser, getOrCreateUser } from '../../../lib/auth'
+import { queryOne } from '../../../../lib/db'
+import { getAuthUser, getOrCreateUser } from '../../../../lib/auth'
 
 const PLAN_LIMITS: Record<string, Record<string, number>> = {
   free:      { cv: 3, cl: 1, review: 1, interview: 0, flags: 0, keywords: 0, company_research: 0, deep_review: 0 },
