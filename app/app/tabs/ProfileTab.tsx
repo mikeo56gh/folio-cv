@@ -1,7 +1,6 @@
 'use client'
 import { useApp, SENIORITY } from '../context'
-import { Card, Field, Input, SectionHeader, CompletenessBar, Guidance } from '../../../components/ui'
-import { clsx } from 'clsx'
+import { Card, Field, Input, LocationInput, SectionHeader, CompletenessBar, Guidance } from '../../../components/ui'
 
 export function ProfileTab() {
   const { profileData, updateProfile } = useApp()
@@ -22,54 +21,70 @@ export function ProfileTab() {
 
   return (
     <div>
-      <SectionHeader eyebrow="Step 1" title="Personal profile" sub="Contact details and career level" />
+      <SectionHeader eyebrow="Step 1" title="Personal profile" sub="Your contact details and career level. Used on every CV and cover letter." />
       <CompletenessBar checks={completenessChecks} />
 
-      <Card className="mb-4">
-        <div className="font-semibold text-xs text-gray-500 uppercase tracking-widest mb-4">Contact details</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Full name" required><Input value={prof.name} onChange={e => updateProfile('name', e.target.value)} placeholder="Jane Smith" /></Field>
-          <Field label="Email" required><Input type="email" value={prof.email} onChange={e => updateProfile('email', e.target.value)} placeholder="jane@email.com" /></Field>
-          <Field label="Phone"><Input value={prof.phone} onChange={e => updateProfile('phone', e.target.value)} placeholder="+44 7700 000000" /></Field>
-          <Field label="Location"><Input value={prof.location} onChange={e => updateProfile('location', e.target.value)} placeholder="London, UK" /></Field>
-          <div className="sm:col-span-2">
-            <Field label="LinkedIn URL"><Input value={prof.linkedin} onChange={e => updateProfile('linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourname" /></Field>
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 16 }}>Contact details</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+          <Field label="Full name" required>
+            <Input value={prof.name} onChange={e => updateProfile('name', e.target.value)} placeholder="Jane Smith" />
+          </Field>
+          <Field label="Email address" required>
+            <Input type="email" value={prof.email} onChange={e => updateProfile('email', e.target.value)} placeholder="jane@email.com" />
+          </Field>
+          <Field label="Phone number">
+            <Input value={prof.phone} onChange={e => updateProfile('phone', e.target.value)} placeholder="+44 7700 000000" />
+          </Field>
+          <Field label="Location" hint="City and country — shown on CV">
+            <LocationInput value={prof.location} onChange={v => updateProfile('location', v)} placeholder="e.g. London, UK" />
+          </Field>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <Field label="LinkedIn URL">
+              <Input value={prof.linkedin} onChange={e => updateProfile('linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourname" />
+            </Field>
           </div>
-          <Field label="GitHub"><Input value={prof.github} onChange={e => updateProfile('github', e.target.value)} placeholder="https://github.com/yourname" /></Field>
-          <Field label="Portfolio / website"><Input value={prof.website} onChange={e => updateProfile('website', e.target.value)} placeholder="https://yoursite.com" /></Field>
+          <Field label="GitHub">
+            <Input value={prof.github} onChange={e => updateProfile('github', e.target.value)} placeholder="https://github.com/yourname" />
+          </Field>
+          <Field label="Portfolio / website">
+            <Input value={prof.website} onChange={e => updateProfile('website', e.target.value)} placeholder="https://yoursite.com" />
+          </Field>
         </div>
       </Card>
 
-      <Card>
-        <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold text-xs text-gray-500 uppercase tracking-widest">Career level</div>
-          <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">Shapes AI tone</span>
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af' }}>Career level</div>
+          <span style={{ fontSize: 10, fontWeight: 700, background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: 99, padding: '3px 10px', letterSpacing: '0.04em' }}>SHAPES AI TONE</span>
         </div>
-        <p className="text-sm text-gray-400 mb-4 leading-relaxed">Select your current or target level. The AI calibrates tone, language, and emphasis accordingly.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 14, lineHeight: 1.55 }}>
+          Select your current or target level. The AI calibrates tone, language, and emphasis to your career stage.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
           {SENIORITY.map(sen => (
             <button
               key={sen.key}
               type="button"
               onClick={() => updateProfile('seniority', sen.key)}
-              className={clsx(
-                'text-left p-3 rounded-xl border-[1.5px] transition-all duration-150',
-                prof.seniority === sen.key
-                  ? 'border-forest-400 bg-forest-50'
-                  : 'border-parchment-300 bg-white hover:border-forest-200 hover:bg-parchment-50'
-              )}
+              style={{
+                textAlign: 'left', padding: '12px 14px', borderRadius: 12, border: '1.5px solid',
+                cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-sans)',
+                borderColor: prof.seniority === sen.key ? '#16a34a' : '#e5e7eb',
+                background: prof.seniority === sen.key ? '#dcfce7' : '#fff',
+              }}
             >
-              <div className={clsx('text-xs font-semibold mb-0.5', prof.seniority === sen.key ? 'text-forest-700' : 'text-gray-800')}>{sen.label}</div>
-              <div className="text-[11px] text-gray-400">{sen.desc}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, color: prof.seniority === sen.key ? '#15803d' : '#111827' }}>{sen.label}</div>
+              <div style={{ fontSize: 11, color: '#9ca3af', lineHeight: 1.4 }}>{sen.desc}</div>
             </button>
           ))}
         </div>
       </Card>
 
-      <Guidance title="📋 Profile tips" items={[
+      <Guidance title="Profile tips" items={[
         'Use a professional email — avoid nicknames or old university addresses',
-        'Customise your LinkedIn URL: linkedin.com/in/yourname (not a random string)',
-        'Location: city and country only — no full address needed on a CV',
+        'Customise your LinkedIn URL: linkedin.com/in/yourname (Settings → Edit public profile URL)',
+        'Location: city and country only — no full address needed',
         'Only include GitHub/portfolio if they contain recent, quality work',
       ]} />
     </div>

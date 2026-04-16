@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const user = await getUser(request)
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
 
-  const { data } = await supabaseAdmin
+  const { data } = await getSupabaseAdmin()
     .from('profiles')
     .select('id, name, is_default, updated_at')
     .eq('user_id', user.id)
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const limit = PROFILE_LIMITS[plan] ?? 1
 
   if (limit !== -1) {
-    const { count } = await supabaseAdmin
+    const { count } = await getSupabaseAdmin()
       .from('profiles').select('id', { count: 'exact' }).eq('user_id', user.id)
     if ((count || 0) >= limit) {
       return new Response(JSON.stringify({
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   const { name } = await request.json()
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('profiles')
     .insert({ user_id: user.id, name: name || 'New Profile' })
     .select()

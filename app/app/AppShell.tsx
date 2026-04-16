@@ -3,7 +3,11 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@supabase/supabase-js'
-import { ChevronDown, Sparkles, CreditCard, LogOut, Plus } from 'lucide-react'
+import {
+  User, Briefcase, GraduationCap, Award, Zap, Search, LayoutGrid,
+  Clock, Wrench, Sparkles, LogOut, CreditCard, Plus, ChevronRight,
+  CheckCircle, Circle, Menu, X, TrendingUp
+} from 'lucide-react'
 import { AppProvider, useApp, SENIORITY } from './context'
 import { ProfileTab } from './tabs/ProfileTab'
 import { ToolsTab } from './tabs/ToolsTab'
@@ -21,25 +25,31 @@ const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const TABS = [
-  { id: 'profile',        label: 'Profile',         step: '1' },
-  { id: 'experience',     label: 'Experience',       step: '2' },
-  { id: 'education',      label: 'Education',        step: '3' },
-  { id: 'qualifications', label: 'Qualifications',   step: '4' },
-  { id: 'skills',         label: 'Skills',           step: '5' },
-  { id: 'generate',       label: 'Generate',         step: '◈' },
-  { id: 'jobs',           label: 'Find jobs',        step: '🔎' },
-  { id: 'tracker',        label: 'Tracker',          step: '📋' },
-  { id: 'history',        label: 'History',          step: '🕐' },
+const SETUP_TABS = [
+  { id: 'profile',        label: 'Profile',         icon: User,          step: 1 },
+  { id: 'experience',     label: 'Experience',       icon: Briefcase,     step: 2 },
+  { id: 'education',      label: 'Education',        icon: GraduationCap, step: 3 },
+  { id: 'qualifications', label: 'Qualifications',   icon: Award,         step: 4 },
+  { id: 'skills',         label: 'Skills',           icon: Zap,           step: 5 },
 ]
 
-const PLAN_COLORS: Record<string, string> = {
-  free: 'bg-gray-100 text-gray-600',
-  pro: 'bg-forest-50 text-forest-700',
-  boost: 'bg-amber-50 text-amber-700',
-  recruiter: 'bg-purple-50 text-purple-700',
+const ACTION_TABS = [
+  { id: 'generate', label: 'Generate',   icon: Sparkles    },
+  { id: 'jobs',     label: 'Find jobs',  icon: Search      },
+  { id: 'tracker',  label: 'Tracker',    icon: LayoutGrid  },
+  { id: 'history',  label: 'History',    icon: Clock       },
+  { id: 'tools',    label: 'Tools',      icon: Wrench      },
+]
+
+const PLAN_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+  free:      { bg: '#f3f4f6', color: '#6b7280', label: 'Free' },
+  sprint:    { bg: '#dcfce7', color: '#16a34a', label: 'Sprint' },
+  pro:       { bg: '#dcfce7', color: '#16a34a', label: 'Pro' },
+  boost:     { bg: '#fef3c7', color: '#d97706', label: 'Boost' },
+  recruiter: { bg: '#f3e8ff', color: '#7c3aed', label: 'Recruiter' },
 }
 
+// ─── UPGRADE MODAL ────────────────────────────────────────────
 function UpgradeModal() {
   const { upgradeMsg, setUpgradeMsg, checkout } = useApp()
   if (!upgradeMsg) return null
@@ -47,46 +57,47 @@ function UpgradeModal() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
         onClick={() => setUpgradeMsg(null)}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-7"
+          initial={{ opacity: 0, scale: 0.96, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
+          style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={18} className="text-forest-500" />
-            <h3 className="font-serif text-xl text-gray-900">Upgrade your plan</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={16} color="#16a34a" />
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>Upgrade your plan</h3>
           </div>
-          <p className="text-sm text-gray-500 mb-6 leading-relaxed">{upgradeMsg}</p>
+          <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20, lineHeight: 1.6 }}>{upgradeMsg}</p>
 
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             {[
-              { key: 'sprint', name: 'Job Seeker Sprint', price: '£39 / 3 months', features: ['Unlimited everything', 'LinkedIn optimiser', 'Weekly job alerts', 'Pay once — no monthly commitment'] },
-              { key: 'pro', name: 'Pro', price: '£9/mo', features: ['Unlimited everything', 'Company research', 'Interview prep', 'Version history'] },
+              { key: 'sprint', name: 'Sprint', price: '£39 / 3 months', tag: 'Best value', features: ['Everything unlimited', 'LinkedIn optimiser', 'Salary coach', 'No monthly bill'] },
+              { key: 'boost', name: 'Career Boost', price: '£19/month', tag: null, features: ['Everything in Pro', 'LinkedIn optimiser', 'Salary coach', 'Job alerts'] },
             ].map(plan => (
-              <div key={plan.key} className="border border-parchment-300 rounded-xl p-4">
-                <div className="font-semibold text-sm text-gray-900 mb-0.5">{plan.name}</div>
-                <div className="text-xs text-forest-600 font-medium mb-3">{plan.price}</div>
-                <ul className="space-y-1 mb-4">
-                  {plan.features.map(f => <li key={f} className="text-xs text-gray-500">✓ {f}</li>)}
+              <div key={plan.key} style={{ border: '1.5px solid #e5e7eb', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {plan.tag && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#16a34a', marginBottom: 4 }}>{plan.tag}</span>}
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#111827', marginBottom: 2 }}>{plan.name}</div>
+                <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 600, marginBottom: 12 }}>{plan.price}</div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                  {plan.features.map(f => (
+                    <li key={f} style={{ fontSize: 12, color: '#374151', display: 'flex', gap: 7 }}>
+                      <span style={{ color: '#16a34a', flexShrink: 0 }}>✓</span>{f}
+                    </li>
+                  ))}
                 </ul>
-                <button
-                  onClick={() => { setUpgradeMsg(null); checkout(plan.key) }}
-                  className="w-full bg-forest-500 text-white rounded-lg py-2 text-xs font-semibold hover:bg-forest-600 transition-colors"
-                >
-                  Upgrade to {plan.name}
+                <button onClick={() => { setUpgradeMsg(null); checkout(plan.key) }}
+                  style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '9px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                  Get {plan.name}
                 </button>
               </div>
             ))}
           </div>
-          <button onClick={() => setUpgradeMsg(null)} className="w-full text-center text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={() => setUpgradeMsg(null)} style={{ display: 'block', width: '100%', textAlign: 'center', fontSize: 13, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
             Maybe later
           </button>
         </motion.div>
@@ -95,35 +106,10 @@ function UpgradeModal() {
   )
 }
 
-function AppShell() {
-  const router = useRouter()
-  const params = useSearchParams()
-  const { userInfo, profiles, currentProfileId, profileData, switchProfile, newProfile, saveVersion, signOut, checkout, outputs } = useApp()
-  const [tab, setTab] = useState('profile')
-  const [salaryCoachPreset, setSalaryCoachPreset] = useState<{ role: string; company: string } | null>(null)
+// ─── SIDEBAR ──────────────────────────────────────────────────
+function Sidebar({ tab, setTab, open, setOpen }: { tab: string; setTab: (t: string) => void; open: boolean; setOpen: (v: boolean) => void }) {
+  const { profileData, userInfo, profiles, currentProfileId, switchProfile, newProfile, signOut, checkout } = useApp()
 
-  function openSalaryCoach(role: string, company: string) {
-    setSalaryCoachPreset({ role, company })
-    setTab('tools')
-  }
-
-  // Handle checkout redirect and extension JD injection
-  useEffect(() => {
-    const plan = params.get('checkout')
-    if (plan) checkout(plan)
-
-    // Handle JD injection from Chrome extension
-    const jd = params.get('jd')
-    const jdUrl = params.get('url')
-    const from = params.get('from')
-    if (jd && from === 'extension') {
-      setJdText(decodeURIComponent(jd))
-      if (jdUrl) setJdUrl(decodeURIComponent(jdUrl))
-      setTab('generate')
-    }
-  }, [])
-
-  // Progress dots
   const progress = [
     !!(profileData.profile.name && profileData.profile.email),
     profileData.jobs.some(j => !j.isGap && j.title && j.company),
@@ -131,164 +117,250 @@ function AppShell() {
     profileData.skills.some(s => s.tags.length > 0),
   ]
   const progressCount = progress.filter(Boolean).length
+  const planStyle = PLAN_STYLES[userInfo?.plan || 'free'] || PLAN_STYLES.free
 
-  const GENERATE_TABS = ['generate', 'jobs', 'tracker', 'history']
-  const isAtGenerate = GENERATE_TABS.includes(tab)
-
-  const tabIndex = TABS.findIndex(t => t.id === tab)
-  const canGoBack = tabIndex > 0 && !GENERATE_TABS.includes(tab)
-  const canGoForward = tabIndex < 5 // only Continue on setup tabs
+  const navItem = (id: string, label: string, Icon: any, isDone?: boolean) => {
+    const active = tab === id
+    return (
+      <button key={id} onClick={() => { setTab(id); setOpen(false) }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+          padding: '9px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
+          background: active ? '#dcfce7' : 'transparent',
+          color: active ? '#15803d' : '#6b7280',
+          fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: active ? 700 : 500,
+          transition: 'all 0.12s', textAlign: 'left',
+        }}
+        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = '#f9fafb' }}
+        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+      >
+        <Icon size={15} style={{ flexShrink: 0 }} />
+        <span style={{ flex: 1 }}>{label}</span>
+        {isDone !== undefined && (
+          isDone
+            ? <CheckCircle size={13} style={{ color: '#16a34a', flexShrink: 0 }} />
+            : <Circle size={13} style={{ color: '#d1d5db', flexShrink: 0 }} />
+        )}
+      </button>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-parchment-100 flex flex-col">
-      <UpgradeModal />
-
-      {/* HEADER */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-parchment-300 shadow-sm">
-        <div className="flex items-center justify-between px-5 h-14">
-          <div className="flex items-center gap-3">
-            <span className="font-serif text-[19px] text-gray-900">Folio</span>
-            <span className="hidden sm:block text-[9px] font-bold tracking-[2px] text-forest-600 uppercase">CV Builder</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Profile selector */}
-            <div className="flex items-center gap-1">
-              <select
-                value={currentProfileId || ''}
-                onChange={e => switchProfile(e.target.value)}
-                className="bg-parchment-100 border border-parchment-300 rounded-lg text-xs font-medium text-gray-700 px-2.5 py-1.5 outline-none max-w-[130px] cursor-pointer"
-              >
-                {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <button
-                onClick={newProfile}
-                className="w-7 h-7 flex items-center justify-center bg-parchment-100 border border-parchment-300 rounded-lg text-gray-500 hover:text-forest-600 hover:border-forest-300 transition-colors"
-              >
-                <Plus size={13} />
-              </button>
-            </div>
-
-            {/* Plan badge */}
-            {userInfo && (
-              <span className={`hidden sm:inline-flex text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider uppercase ${PLAN_COLORS[userInfo.plan] || PLAN_COLORS.free}`}>
-                {userInfo.planName}
-              </span>
-            )}
-
-            {/* Progress */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-20 h-1.5 bg-parchment-300 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-forest-500 rounded-full transition-all duration-500"
-                  style={{ width: `${(progressCount / 4) * 100}%` }}
-                />
-              </div>
-              <span className="text-[10px] font-medium text-gray-500">{progressCount}/4</span>
-            </div>
-
-            {/* Actions */}
-            {userInfo?.plan !== 'free' && (
-              <button onClick={async () => { const { url } = await (await fetch('/api/stripe/portal', { method: 'POST', headers: { Authorization: `Bearer ${userInfo?.token}` } })).json(); window.location.href = url }}
-                className="hidden sm:flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1.5">
-                <CreditCard size={12} />
-              </button>
-            )}
-            <button onClick={signOut} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1.5">
-              <LogOut size={13} />
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Free plan usage bar */}
-        {userInfo?.plan === 'free' && (
-          <div className="bg-amber-50 border-t border-amber-200 px-5 py-1.5 flex items-center justify-between">
-            <span className="text-xs text-amber-700">
-              Free plan · {userInfo.usageSummary?.cv?.remaining ?? '?'} CV generations, {userInfo.usageSummary?.review?.remaining ?? '?'} fit reviews remaining
-            </span>
-            <button onClick={() => checkout('pro')} className="text-xs font-semibold text-amber-700 underline hover:text-amber-900">
-              Upgrade to Pro →
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* NAV */}
-      <nav className="bg-white border-b border-parchment-300 overflow-x-auto">
-        <div className="flex min-w-max px-4">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`relative flex items-center gap-2 px-3.5 h-11 text-xs font-medium transition-colors whitespace-nowrap border-b-2 ${
-                tab === t.id
-                  ? 'border-forest-500 text-forest-700'
-                  : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-parchment-400'
-              }`}
-            >
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
-                tab === t.id ? 'bg-forest-50 text-forest-600' : 'bg-parchment-200 text-gray-500'
-              }`}>
-                {t.step}
-              </span>
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      {/* MAIN CONTENT */}
-      <main className="flex-1 max-w-[960px] mx-auto w-full px-5 py-6 pb-24">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
-          >
-            {tab === 'profile'        && <ProfileTab />}
-            {tab === 'experience'     && <ExperienceTab />}
-            {tab === 'education'      && <EducationTab />}
-            {tab === 'qualifications' && <QualificationsTab />}
-            {tab === 'skills'         && <SkillsTab />}
-            {tab === 'generate'       && <GenerateTab />}
-            {tab === 'jobs'           && <JobsTab onApply={(job) => { setTab('generate') }} />}
-            {tab === 'tools'          && <ToolsTab initialSection={salaryCoachPreset ? 'salary' : undefined} salaryPreset={salaryCoachPreset} />}
-            {tab === 'tracker'        && <TrackerTab onOpenSalaryCoach={openSalaryCoach} />}
-            {tab === 'history'        && <HistoryTab onRestore={() => setTab('generate')} />}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-
-      {/* FOOTER */}
-      {!isAtGenerate && (
-        <footer className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-parchment-300 px-5 py-3 flex justify-end gap-2.5 z-30">
-          {canGoBack && (
-            <button onClick={() => setTab(TABS[tabIndex - 1].id)}
-              className="text-sm font-medium text-gray-500 hover:text-gray-800 bg-parchment-100 border border-parchment-300 px-5 py-2 rounded-xl transition-all hover:border-parchment-400">
-              ← Back
-            </button>
-          )}
-          {canGoForward && tabIndex < 5 && (
-            <button onClick={() => setTab(TABS[tabIndex + 1].id)}
-              className="text-sm font-semibold text-white bg-forest-500 hover:bg-forest-600 px-6 py-2 rounded-xl transition-all shadow-sm hover:shadow">
-              Continue →
-            </button>
-          )}
-          {tab === 'generate' && (
-            <button onClick={saveVersion}
-              className="text-sm font-medium text-gray-600 border border-parchment-300 px-5 py-2 rounded-xl hover:border-parchment-400 transition-all">
-              💾 Save version
-            </button>
-          )}
-        </footer>
+    <>
+      {/* Mobile overlay */}
+      {open && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 49 }} onClick={() => setOpen(false)} />
       )}
+
+      <aside style={{
+        width: 224, flexShrink: 0, background: '#fff', borderRight: '1px solid #e5e7eb',
+        display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, overflow: 'hidden',
+        // Mobile: slide in
+        ...(typeof window !== 'undefined' && window.innerWidth < 768 ? {
+          position: 'fixed', left: open ? 0 : -240, top: 0, bottom: 0, zIndex: 50,
+          transition: 'left 0.25s ease', boxShadow: open ? '4px 0 24px rgba(0,0,0,0.15)' : 'none',
+        } : {}),
+      }} className="sidebar">
+        {/* Logo */}
+        <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid #f3f4f6' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>Folio</span>
+            <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: '0.18em', color: '#16a34a', textTransform: 'uppercase' }}>CV Builder</span>
+          </div>
+        </div>
+
+        {/* Profile switcher */}
+        <div style={{ padding: '12px 12px 8px' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 6, paddingLeft: 4 }}>Profile</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select value={currentProfileId || ''} onChange={e => switchProfile(e.target.value)}
+              style={{ flex: 1, background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#374151', padding: '6px 10px', outline: 'none', fontFamily: 'var(--font-sans)', cursor: 'pointer' }}>
+              {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <button onClick={newProfile}
+              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', color: '#6b7280', flexShrink: 0 }}>
+              <Plus size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Progress */}
+        <div style={{ padding: '4px 16px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af' }}>Completeness</span>
+            <span style={{ fontSize: 11, fontWeight: 800, color: progressCount === 4 ? '#16a34a' : '#d97706' }}>{Math.round((progressCount / 4) * 100)}%</span>
+          </div>
+          <div style={{ height: 5, background: '#f3f4f6', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${(progressCount / 4) * 100}%`, background: progressCount === 4 ? '#16a34a' : '#f59e0b', borderRadius: 99, transition: 'width 0.4s ease' }} />
+          </div>
+        </div>
+
+        {/* Nav — Setup */}
+        <div style={{ padding: '0 8px', flex: 1, overflowY: 'auto' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', padding: '6px 4px 4px' }}>Setup</div>
+          {SETUP_TABS.map(t => navItem(t.id, t.label, t.icon, progress[t.step - 1]))}
+
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', padding: '14px 4px 4px' }}>Actions</div>
+          {ACTION_TABS.map(t => navItem(t.id, t.label, t.icon))}
+        </div>
+
+        {/* Bottom — plan + signout */}
+        <div style={{ padding: '10px 12px 16px', borderTop: '1px solid #f3f4f6' }}>
+          {userInfo?.plan === 'free' && (
+            <button onClick={() => checkout('sprint')}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: '#dcfce7', border: '1.5px solid #bbf7d0', borderRadius: 10, padding: '10px 12px', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+              <Sparkles size={14} color="#16a34a" />
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d' }}>Upgrade to Pro</div>
+                <div style={{ fontSize: 10, color: '#16a34a', fontWeight: 500 }}>Unlimited everything</div>
+              </div>
+            </button>
+          )}
+          {userInfo && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 4px 8px' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#374151', flexShrink: 0 }}>
+                {(userInfo.fullName || userInfo.email || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userInfo.fullName || userInfo.email?.split('@')[0]}</div>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 99, background: planStyle.bg, color: planStyle.color }}>{planStyle.label}</span>
+              </div>
+            </div>
+          )}
+          <button onClick={signOut}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', padding: '7px 4px', cursor: 'pointer', fontSize: 12, color: '#9ca3af', fontFamily: 'var(--font-sans)', fontWeight: 500 }}>
+            <LogOut size={13} />
+            Sign out
+          </button>
+        </div>
+      </aside>
+    </>
+  )
+}
+
+// ─── FREE PLAN BANNER ─────────────────────────────────────────
+function FreeBanner() {
+  const { userInfo, checkout } = useApp()
+  if (!userInfo || userInfo.plan !== 'free') return null
+  return (
+    <div style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span style={{ fontSize: 12, color: '#92400e', fontWeight: 500 }}>
+        Free plan · {userInfo.usageSummary?.cv?.remaining ?? '?'} CV generations and {userInfo.usageSummary?.review?.remaining ?? '?'} fit reviews remaining
+      </span>
+      <button onClick={() => checkout('pro')}
+        style={{ fontSize: 12, fontWeight: 700, color: '#d97706', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', textDecoration: 'underline' }}>
+        Upgrade →
+      </button>
     </div>
   )
 }
 
+// ─── MAIN APP SHELL ───────────────────────────────────────────
+function AppShell() {
+  const params = useSearchParams()
+  const { checkout } = useApp()
+  const [tab, setTab] = useState('profile')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [salaryCoachPreset, setSalaryCoachPreset] = useState<{ role: string; company: string } | null>(null)
+
+  function openSalaryCoach(role: string, company: string) {
+    setSalaryCoachPreset({ role, company })
+    setTab('tools')
+  }
+
+  useEffect(() => {
+    const plan = params.get('checkout')
+    if (plan) checkout(plan)
+    const jd = params.get('jd')
+    const from = params.get('from')
+    if (jd && from === 'extension') {
+      setTab('generate')
+    }
+  }, [])
+
+  const allTabs = [...SETUP_TABS, ...ACTION_TABS]
+  const currentTabInfo = allTabs.find(t => t.id === tab)
+  const isSetupTab = SETUP_TABS.some(t => t.id === tab)
+  const currentIdx = SETUP_TABS.findIndex(t => t.id === tab)
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb', fontFamily: 'var(--font-sans)' }}>
+      <UpgradeModal />
+
+      {/* Sidebar */}
+      <Sidebar tab={tab} setTab={setTab} open={sidebarOpen} setOpen={setSidebarOpen} />
+
+      {/* Main content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+        {/* Top bar */}
+        <header style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 20px', height: 52, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, position: 'sticky', top: 0, zIndex: 30 }}>
+          {/* Mobile menu button */}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6b7280' }} className="md:hidden sidebar-toggle">
+            <Menu size={20} />
+          </button>
+
+          {/* Breadcrumb */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+            <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>Folio</span>
+            <ChevronRight size={13} style={{ color: '#d1d5db' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{currentTabInfo?.label || 'App'}</span>
+          </div>
+
+          {/* Right actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {isSetupTab && currentIdx < SETUP_TABS.length - 1 && (
+              <button onClick={() => setTab(SETUP_TABS[currentIdx + 1].id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                Next <ChevronRight size={14} />
+              </button>
+            )}
+            {currentIdx === SETUP_TABS.length - 1 && (
+              <button onClick={() => setTab('generate')}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                Generate CV <Sparkles size={14} />
+              </button>
+            )}
+          </div>
+        </header>
+
+        <FreeBanner />
+
+        {/* Page content */}
+        <main style={{ flex: 1, padding: '24px 24px 48px', maxWidth: 900, width: '100%', margin: '0 auto' }}>
+          <AnimatePresence mode="wait">
+            <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              {tab === 'profile'        && <ProfileTab />}
+              {tab === 'experience'     && <ExperienceTab />}
+              {tab === 'education'      && <EducationTab />}
+              {tab === 'qualifications' && <QualificationsTab />}
+              {tab === 'skills'         && <SkillsTab />}
+              {tab === 'generate'       && <GenerateTab />}
+              {tab === 'jobs'           && <JobsTab onApply={() => setTab('generate')} />}
+              {tab === 'tracker'        && <TrackerTab onOpenSalaryCoach={openSalaryCoach} />}
+              {tab === 'history'        && <HistoryTab onRestore={() => setTab('generate')} />}
+              {tab === 'tools'          && <ToolsTab initialSection={salaryCoachPreset ? 'salary' : undefined} salaryPreset={salaryCoachPreset} />}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .sidebar { position: fixed !important; z-index: 50 !important; }
+          .sidebar-toggle { display: flex !important; }
+        }
+        @media (min-width: 769px) {
+          .sidebar { position: sticky !important; left: unset !important; }
+        }
+        * { box-sizing: border-box; }
+        select { appearance: none; }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── ROOT EXPORT ──────────────────────────────────────────────
 export default function AppPage() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -297,31 +369,24 @@ export default function AppPage() {
   useEffect(() => {
     const supabase = getSupabase()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace('/auth')
-      } else {
-        setSession(session)
-      }
+      if (!session) router.replace('/auth')
+      else setSession(session)
       setLoading(false)
     })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        router.replace('/auth')
-      } else {
-        setSession(session)
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!session) router.replace('/auth')
+      else setSession(session)
     })
-
     return () => subscription.unsubscribe()
   }, [router])
 
   if (loading) return (
-    <div className="min-h-screen bg-parchment-100 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3 text-gray-400">
-        <div className="w-8 h-8 border-2 border-forest-300 border-t-forest-600 rounded-full animate-spin" />
-        <span className="text-sm font-medium">Loading Folio…</span>
+    <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, color: '#9ca3af' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#16a34a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>Loading Folio…</span>
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
