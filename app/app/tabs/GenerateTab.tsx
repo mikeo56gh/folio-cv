@@ -1,218 +1,364 @@
 'use client'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { useCompletion } from 'ai/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useApp, SENIORITY, TONES, SECTORS, fmtDate } from '../context'
-import { Card, SectionHeader, Field, Input, Textarea, Chip, Tip, Guidance, Button } from '../../../components/ui'
-import { Search, Building2, FileText, Mail, BarChart2, Mic, Flag, Key, Loader2, Copy, Download, Printer, CheckCircle, X, Plus } from 'lucide-react'
+import { useApp, SENIORITY, TONES, SECTORS, fmtDate, uid } from '../context'
+import { Field, Input, Guidance, Button } from '../../../components/ui'
+import {
+  Search, FileText, Mail, BarChart2, Mic, Flag, Key, Loader2,
+  Copy, Download, Printer, CheckCircle, X, Plus, ChevronDown,
+  ChevronUp, Building2, Sparkles, Target, TrendingUp, AlertTriangle
+} from 'lucide-react'
 import { toast } from 'sonner'
-import { clsx } from 'clsx'
 
-const GEN_BUTTONS = [
-  { type: 'cv',        label: 'ATS-optimised CV',      icon: FileText,  variant: 'primary' },
-  { type: 'cl',        label: 'Cover letter',           icon: Mail,      variant: 'secondary' },
-  { type: 'review',    label: 'Fit review & score',     icon: BarChart2, variant: 'blue' },
-  { type: 'interview', label: 'Interview prep',         icon: Mic,       variant: 'purple' },
-  { type: 'flags',     label: 'Red flag checker',       icon: Flag,      variant: 'red' },
-  { type: 'keywords',  label: 'Keyword gap analysis',   icon: Key,       variant: 'amber' },
+// ── Design tokens ──────────────────────────────────────────────
+const T = {
+  green: '#16a34a', greenDark: '#15803d', greenLight: '#dcfce7', greenBorder: '#bbf7d0',
+  ink: '#111827', inkMid: '#374151', inkSoft: '#6b7280', inkFaint: '#9ca3af',
+  border: '#e5e7eb', bg: '#f9fafb', surface: '#ffffff',
+  amber: '#d97706', amberBg: '#fffbeb', amberBorder: '#fde68a',
+  red: '#dc2626', redBg: '#fef2f2', blue: '#2563eb', blueBg: '#eff6ff', blueBorder: '#bfdbfe',
+  purple: '#7c3aed', purpleBg: '#f5f3ff', purpleBorder: '#ddd6fe',
+}
+
+// ── Tool definitions ───────────────────────────────────────────
+const TOOLS = [
+  { type: 'cv',          label: 'ATS CV',        icon: FileText,    color: T.green,  bg: T.greenLight,  border: T.greenBorder },
+  { type: 'cl',          label: 'Cover letter',  icon: Mail,        color: T.green,  bg: T.greenLight,  border: T.greenBorder },
+  { type: 'review',      label: 'Fit review',    icon: BarChart2,   color: T.blue,   bg: T.blueBg,      border: T.blueBorder  },
+  { type: 'deep_review', label: 'Deep analysis', icon: Target,      color: T.purple, bg: T.purpleBg,    border: T.purpleBorder },
+  { type: 'interview',   label: 'Interview prep', icon: Mic,        color: T.purple, bg: T.purpleBg,    border: T.purpleBorder },
+  { type: 'flags',       label: 'Red flags',     icon: Flag,        color: T.red,    bg: T.redBg,       border: '#fecaca'     },
+  { type: 'keywords',    label: 'Keywords',      icon: Key,         color: T.amber,  bg: T.amberBg,     border: T.amberBorder },
 ]
 
-const VARIANT_STYLES: Record<string, string> = {
-  primary:   'bg-forest-500 text-white hover:bg-forest-600 shadow-sm',
-  secondary: 'bg-white text-forest-700 border border-forest-300 hover:bg-forest-50',
-  blue:      'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100',
-  purple:    'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100',
-  red:       'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100',
-  amber:     'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100',
-}
-
-const OUT_TAB_STYLES: Record<string, string> = {
-  cv:        'data-[active=true]:bg-forest-50 data-[active=true]:border-forest-300 data-[active=true]:text-forest-700',
-  cl:        'data-[active=true]:bg-forest-50 data-[active=true]:border-forest-300 data-[active=true]:text-forest-700',
-  review:    'data-[active=true]:bg-blue-50 data-[active=true]:border-blue-300 data-[active=true]:text-blue-700',
-  interview: 'data-[active=true]:bg-purple-50 data-[active=true]:border-purple-300 data-[active=true]:text-purple-700',
-  flags:     'data-[active=true]:bg-red-50 data-[active=true]:border-red-300 data-[active=true]:text-red-700',
-  keywords:  'data-[active=true]:bg-amber-50 data-[active=true]:border-amber-300 data-[active=true]:text-amber-700',
-}
-
-// Score Ring
-function ScoreRing({ score }: { score: number }) {
-  const r = 38; const c = 2 * Math.PI * r
+// ── Score ring ─────────────────────────────────────────────────
+function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
+  const r = (size / 2) - 7
+  const c = 2 * Math.PI * r
   const offset = c - (score / 100) * c
-  const col = score >= 75 ? '#2d5a3d' : score >= 50 ? '#d97706' : '#dc2626'
-  const textCol = score >= 75 ? 'text-forest-600' : score >= 50 ? 'text-amber-600' : 'text-red-600'
+  const col = score >= 75 ? T.green : score >= 50 ? T.amber : T.red
   return (
-    <div className="flex flex-col items-center gap-1">
-      <svg width="90" height="90" viewBox="0 0 90 90">
-        <circle cx="45" cy="45" r={r} fill="none" stroke="#e8f0eb" strokeWidth="5.5" />
-        <motion.circle cx="45" cy="45" r={r} fill="none" stroke={col} strokeWidth="5.5" strokeLinecap="round"
-          strokeDasharray={c} strokeDashoffset={offset} transform="rotate(-90 45 45)"
-          initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1], delay: 0.2 }}
-        />
-        <text x="45" y="41" textAnchor="middle" fontSize="18" fontWeight="600" fill={col} fontFamily="Georgia, serif">{score}</text>
-        <text x="45" y="54" textAnchor="middle" fontSize="9" fill="#9ca3af">/100</text>
-      </svg>
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={T.border} strokeWidth="5" />
+      <motion.circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth="5"
+        strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c}
+        animate={{ strokeDashoffset: offset }} transition={{ duration: 1.1, ease: [0.4,0,0.2,1], delay: 0.2 }}
+        transform={`rotate(-90 ${size/2} ${size/2})`} />
+      <text x={size/2} y={size/2 - 4} textAnchor="middle" fontSize={size > 70 ? 18 : 14} fontWeight="800" fill={col} fontFamily="var(--font-serif)">{score}</text>
+      <text x={size/2} y={size/2 + 11} textAnchor="middle" fontSize="9" fill={T.inkFaint} fontFamily="var(--font-sans)">/100</text>
+    </svg>
   )
 }
 
-// Output panels for structured JSON
+// ── Fit review panel ───────────────────────────────────────────
 function ReviewPanel({ data }: { data: any }) {
   const score = Math.min(100, Math.max(0, parseInt(data.fitScore) || 0))
-  const verdict = score >= 80 ? 'Strong match — apply with confidence' : score >= 65 ? 'Good match — worth applying' : score >= 45 ? 'Partial match — consider carefully' : 'Significant gaps'
-  const col = score >= 75 ? 'text-forest-600' : score >= 50 ? 'text-amber-600' : 'text-red-600'
+  const verdict = score >= 80 ? 'Strong match' : score >= 65 ? 'Good match' : score >= 45 ? 'Partial match' : 'Significant gaps'
+  const col = score >= 75 ? T.green : score >= 50 ? T.amber : T.red
+
   return (
-    <div className="p-5 space-y-5">
-      <div className="flex items-center gap-5">
+    <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
         <ScoreRing score={score} />
         <div>
-          <div className={clsx('text-lg font-semibold', col)}>{verdict}</div>
-          <div className="text-xs text-gray-400 mt-0.5">Based on JD match, experience, skills, and seniority</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: col, letterSpacing: '-0.02em' }}>{verdict}</div>
+          <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 2 }}>Based on JD match, experience, skills, and seniority</div>
           {data.salaryContext && (
-            <div className="mt-2 bg-forest-50 border border-forest-200 rounded-lg px-3 py-2">
-              <div className="text-forest-700 font-semibold text-sm">{data.salaryContext.range}</div>
-              <div className="text-xs text-forest-600 mt-0.5 leading-relaxed">{data.salaryContext.note}</div>
+            <div style={{ marginTop: 10, background: T.greenLight, border: `1px solid ${T.greenBorder}`, borderRadius: 10, padding: '10px 14px' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.greenDark }}>{data.salaryContext.range}</div>
+              <div style={{ fontSize: 12, color: T.green, marginTop: 2, lineHeight: 1.5 }}>{data.salaryContext.note}</div>
             </div>
           )}
         </div>
       </div>
+
       {(data.dimensions || []).map((d: any) => (
-        <div key={d.name} className="flex items-center gap-3">
-          <span className="w-28 text-xs text-gray-500 shrink-0">{d.name}</span>
-          <div className="flex-1 h-1.5 bg-parchment-200 rounded-full overflow-hidden">
+        <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ width: 130, fontSize: 12, color: T.inkSoft, flexShrink: 0 }}>{d.name}</span>
+          <div style={{ flex: 1, height: 6, background: T.border, borderRadius: 99, overflow: 'hidden' }}>
             <motion.div initial={{ width: 0 }} animate={{ width: `${d.score}%` }} transition={{ duration: 0.7, delay: 0.3 }}
-              className="h-full rounded-full" style={{ background: d.score >= 70 ? '#2d5a3d' : d.score >= 45 ? '#d97706' : '#dc2626' }} />
+              style={{ height: '100%', borderRadius: 99, background: d.score >= 70 ? T.green : d.score >= 45 ? T.amber : T.red }} />
           </div>
-          <span className="w-7 text-right text-xs font-semibold text-gray-600">{d.score}%</span>
+          <span style={{ width: 36, textAlign: 'right', fontSize: 12, fontWeight: 700, color: T.inkMid }}>{d.score}%</span>
         </div>
       ))}
+
       {[
-        { title: '✓ Strengths', items: data.strengths, col: 'text-forest-700', dot: 'bg-forest-500' },
-        { title: '✗ Gaps', items: data.gaps, col: 'text-red-700', dot: 'bg-red-500' },
-        { title: '⚠ Considerations', items: data.considerations, col: 'text-amber-700', dot: 'bg-amber-500' },
-      ].map(({ title, items, col, dot }) => (items || []).length ? (
+        { title: 'Strengths', items: data.strengths, col: T.green,   bg: T.greenLight, border: T.greenBorder, icon: '✓' },
+        { title: 'Gaps',      items: data.gaps,      col: T.red,     bg: T.redBg,      border: '#fecaca',     icon: '✗' },
+        { title: 'Watch',     items: data.considerations, col: T.amber, bg: T.amberBg, border: T.amberBorder, icon: '⚠' },
+      ].map(({ title, items, col, bg, border, icon }) => (items || []).length ? (
         <div key={title}>
-          <div className={clsx('text-[11px] font-bold tracking-[1.5px] uppercase mb-2', col)}>{title}</div>
-          {items.map((item: string, i: number) => (
-            <div key={i} className="flex items-start gap-2 text-sm text-gray-600 mb-2 leading-relaxed">
-              <div className={clsx('w-1.5 h-1.5 rounded-full mt-1.5 shrink-0', dot)} />{item}
-            </div>
-          ))}
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: col, marginBottom: 8 }}>{icon} {title}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {items.map((item: string, i: number) => (
+              <div key={i} style={{ display: 'flex', gap: 10, background: bg, border: `1px solid ${border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13, color: T.inkMid, lineHeight: 1.5 }}>
+                <span style={{ color: col, flexShrink: 0, fontWeight: 700 }}>{icon}</span>
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       ) : null)}
-      {data.recommendation && <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5 text-sm text-blue-800 leading-relaxed">💬 {data.recommendation}</div>}
+
+      {data.recommendation && (
+        <div style={{ background: T.blueBg, border: `1px solid ${T.blueBorder}`, borderRadius: 10, padding: '12px 16px', fontSize: 13, color: T.blue, lineHeight: 1.6 }}>
+          💬 {data.recommendation}
+        </div>
+      )}
     </div>
   )
 }
 
+// ── Deep review (scorecard) panel ──────────────────────────────
+function DeepReviewPanel({ data }: { data: any }) {
+  const [open, setOpen] = useState<string | null>('assessment')
+
+  const sections = [
+    { key: 'assessment', label: 'Situation assessment', icon: '📊', content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <p style={{ fontSize: 13, color: T.inkMid, lineHeight: 1.7 }}>{data.assessment}</p>
+        {data.gaps?.map((gap: any, i: number) => (
+          <div key={i} style={{ background: gap.addressable ? T.amberBg : T.redBg, border: `1px solid ${gap.addressable ? T.amberBorder : '#fecaca'}`, borderRadius: 10, padding: '12px 16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: gap.addressable ? T.amber : T.red, marginBottom: 4 }}>
+              {gap.type} gap · {gap.addressable ? 'Addressable in narrative' : 'Structural gap'}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.inkMid, marginBottom: 4 }}>{gap.title}</div>
+            <div style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.55 }}>{gap.advice}</div>
+          </div>
+        ))}
+      </div>
+    )},
+    { key: 'scores', label: 'Scorecard', icon: '🎯', content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {[
+          { label: 'CV', score: data.cvScore, notes: data.cvNotes },
+          { label: 'Cover letter', score: data.clScore, notes: data.clNotes },
+        ].map(doc => (
+          <div key={doc.label} style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>{doc.label}</div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.inkFaint, marginBottom: 2 }}>JD Fit</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: doc.score?.fit >= 75 ? T.green : doc.score?.fit >= 50 ? T.amber : T.red, fontFamily: 'var(--font-serif)' }}>{doc.score?.fit ?? '--'}%</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.inkFaint, marginBottom: 2 }}>AI Detection</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: doc.score?.aiRisk === 'Low' ? T.greenLight : doc.score?.aiRisk === 'High' ? T.redBg : T.amberBg, color: doc.score?.aiRisk === 'Low' ? T.green : doc.score?.aiRisk === 'High' ? T.red : T.amber }}>
+                    {doc.score?.aiRisk ?? '--'}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {doc.notes && <p style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.6 }}>{doc.notes}</p>}
+          </div>
+        ))}
+      </div>
+    )},
+    { key: 'options', label: 'Strategic options', icon: '🧭', content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {(data.options || []).map((opt: any, i: number) => (
+          <div key={i} style={{ border: `1.5px solid ${T.border}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>{['A', 'B', 'C'][i]}</span>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>{opt.label}</div>
+            </div>
+            <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.65, marginBottom: 8 }}>{opt.description}</p>
+            {opt.recommendation && (
+              <div style={{ fontSize: 11, fontWeight: 600, color: opt.recommended ? T.green : T.inkFaint, display: 'flex', gap: 5, alignItems: 'center' }}>
+                {opt.recommended && <CheckCircle size={12} color={T.green} />}
+                {opt.recommendation}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )},
+    { key: 'honest', label: 'Honest read', icon: '🪞', content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ background: '#fafafa', border: `1px solid ${T.border}`, borderRadius: 12, padding: '16px 18px' }}>
+          <p style={{ fontSize: 13, color: T.inkMid, lineHeight: 1.75, whiteSpace: 'pre-line' }}>{data.honestRead}</p>
+        </div>
+        {data.interviewPrepNote && (
+          <div style={{ background: T.blueBg, border: `1px solid ${T.blueBorder}`, borderRadius: 10, padding: '12px 16px', fontSize: 13, color: T.blue, lineHeight: 1.6 }}>
+            💬 Interview prep note: {data.interviewPrepNote}
+          </div>
+        )}
+      </div>
+    )},
+  ]
+
+  return (
+    <div style={{ padding: '20px 22px' }}>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, padding: '14px 18px', background: T.purpleBg, border: `1px solid ${T.purpleBorder}`, borderRadius: 12 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.purple, marginBottom: 4 }}>Overall fit</div>
+          <div style={{ fontSize: 36, fontWeight: 800, color: T.purple, fontFamily: 'var(--font-serif)', lineHeight: 1 }}>{data.overallFit ?? '--'}%</div>
+        </div>
+        <div style={{ flex: 1, fontSize: 13, color: T.inkMid, lineHeight: 1.6, paddingLeft: 16, borderLeft: `1px solid ${T.purpleBorder}` }}>
+          {data.oneLiner}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {sections.map(sec => (
+          <div key={sec.key} style={{ border: `1px solid ${T.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <button onClick={() => setOpen(o => o === sec.key ? null : sec.key)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '13px 16px', background: open === sec.key ? T.bg : T.surface, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+              <span style={{ fontSize: 16 }}>{sec.icon}</span>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: T.ink, textAlign: 'left' }}>{sec.label}</span>
+              {open === sec.key ? <ChevronUp size={15} color={T.inkFaint} /> : <ChevronDown size={15} color={T.inkFaint} />}
+            </button>
+            <AnimatePresence>
+              {open === sec.key && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}>
+                  <div style={{ padding: '4px 16px 16px', borderTop: `1px solid ${T.border}' `}}>
+                    {sec.content}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Interview panel ────────────────────────────────────────────
 function InterviewPanel({ data }: { data: any }) {
   return (
-    <div className="p-4 space-y-3">
+    <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
       {(data.questions || []).map((q: any, i: number) => (
-        <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-          className="bg-parchment-100 border border-parchment-300 rounded-xl p-4">
-          <div className="text-[10px] font-bold tracking-[1.5px] text-purple-600 uppercase mb-1">Q{i+1} · {q.type}</div>
-          <div className="font-semibold text-sm text-gray-900 mb-2">{q.question}</div>
-          <div className="text-xs text-gray-500 leading-relaxed"><strong>Angle:</strong> {q.hint}</div>
+        <motion.div key={i} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+          style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 12, padding: '14px 16px' }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.purple, marginBottom: 6 }}>Q{i+1} · {q.type}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 6, lineHeight: 1.45 }}>{q.question}</div>
+          <div style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.6 }}><strong style={{ color: T.inkMid }}>Angle:</strong> {q.hint}</div>
         </motion.div>
       ))}
     </div>
   )
 }
 
+// ── Flags panel ────────────────────────────────────────────────
 function FlagsPanel({ data }: { data: any }) {
-  const st: Record<string, any> = { high: { bg: 'bg-red-50 border-red-200', icon: '🔴' }, medium: { bg: 'bg-amber-50 border-amber-200', icon: '🟡' }, low: { bg: 'bg-forest-50 border-forest-200', icon: '🟢' } }
+  const cfg: Record<string, { bg: string; border: string; col: string; icon: string }> = {
+    high:   { bg: T.redBg,   border: '#fecaca',       col: T.red,   icon: '🔴' },
+    medium: { bg: T.amberBg, border: T.amberBorder,   col: T.amber, icon: '🟡' },
+    low:    { bg: T.greenLight, border: T.greenBorder, col: T.green, icon: '🟢' },
+  }
   return (
-    <div className="p-4 space-y-2.5">
-      <p className="text-xs text-gray-400 mb-3">Address these before submitting your application.</p>
+    <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <p style={{ fontSize: 12, color: T.inkFaint, marginBottom: 4 }}>Address these before submitting.</p>
       {(data.flags || []).map((f: any, i: number) => {
-        const s = st[f.severity] || st.medium
+        const s = cfg[f.severity] || cfg.medium
         return (
-          <div key={i} className={clsx('flex items-start gap-3 rounded-xl p-3.5 border text-sm', s.bg)}>
-            <span className="text-base shrink-0">{s.icon}</span>
-            <div><div className="font-semibold text-gray-800 mb-1">{f.issue}</div><div className="text-xs text-gray-500 leading-relaxed">{f.advice}</div></div>
+          <div key={i} style={{ display: 'flex', gap: 12, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 12, padding: '12px 16px' }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>{s.icon}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 4 }}>{f.issue}</div>
+              <div style={{ fontSize: 12, color: T.inkSoft, lineHeight: 1.6 }}>{f.advice}</div>
+            </div>
           </div>
         )
       })}
-      {data.overall && <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 mt-2">{data.overall}</div>}
+      {data.overall && <div style={{ background: T.amberBg, border: `1px solid ${T.amberBorder}`, borderRadius: 10, padding: '12px 16px', fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>{data.overall}</div>}
     </div>
   )
 }
 
+// ── Keywords panel ─────────────────────────────────────────────
 function KeywordsPanel({ data }: { data: any }) {
   return (
-    <div className="p-4 space-y-4">
-      <p className="text-xs text-gray-400">Green = in your profile · Red = missing. Add missing to skills or achievements.</p>
+    <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <p style={{ fontSize: 12, color: T.inkFaint }}>Green = in your profile · Red = missing. Add missing to skills or achievements.</p>
       {[
-        { title: `✓ You have (${(data.have||[]).length})`, items: data.have, cls: 'bg-forest-50 border-forest-200 text-forest-700' },
-        { title: `✗ Missing (${(data.missing||[]).length})`, items: data.missing, cls: 'bg-red-50 border-red-200 text-red-700' },
-      ].map(({ title, items, cls }) => (
+        { title: `✓ You have (${(data.have||[]).length})`, items: data.have, bg: T.greenLight, border: T.greenBorder, col: T.greenDark },
+        { title: `✗ Missing (${(data.missing||[]).length})`, items: data.missing, bg: T.redBg, border: '#fecaca', col: T.red },
+      ].map(({ title, items, bg, border, col }) => (
         <div key={title}>
-          <div className="text-[11px] font-bold tracking-wider uppercase text-gray-500 mb-2">{title}</div>
-          <div className="flex flex-wrap gap-1.5">{(items||[]).map((k: string) => <span key={k} className={clsx('text-xs px-2.5 py-1 rounded-full font-medium border', cls)}>{k}</span>)}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 8 }}>{title}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {(items||[]).map((k: string) => (
+              <span key={k} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 99, background: bg, border: `1px solid ${border}`, color: col }}>{k}</span>
+            ))}
+          </div>
         </div>
       ))}
-      {data.advice && <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">{data.advice}</div>}
+      {data.advice && <div style={{ background: T.amberBg, border: `1px solid ${T.amberBorder}`, borderRadius: 10, padding: '12px 16px', fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>{data.advice}</div>}
     </div>
   )
 }
 
-function OutputPanel({ type, content }: { type: string; content: string }) {
-  if (!content) return null
-  const isText = ['cv', 'cl'].includes(type)
+// ── Text output panel (CV / cover letter) ──────────────────────
+function TextPanel({ content }: { content: string }) {
   const copy = () => { navigator.clipboard.writeText(content); toast.success('Copied!') }
-  const download = () => { const a = document.createElement('a'); a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content); a.download = type + '.txt'; a.click() }
-  const print = () => { const w = window.open('', '_blank')!; w.document.write(`<html><head><title>Folio</title><style>body{font-family:Calibri,sans-serif;font-size:11pt;line-height:1.6;margin:25mm 20mm}pre{white-space:pre-wrap;font-family:inherit}</style></head><body><pre>${content.replace(/</g,'&lt;')}</pre></body></html>`); w.document.close(); w.print() }
-
-  if (isText) return (
+  const download = () => { const a = document.createElement('a'); a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content); a.download = 'folio-cv.txt'; a.click() }
+  const print = () => { const w = window.open('', '_blank')!; w.document.write(`<html><head><title>Folio CV</title><style>body{font-family:Calibri,sans-serif;font-size:11pt;line-height:1.7;margin:20mm 18mm}pre{white-space:pre-wrap;font-family:inherit}</style></head><body><pre>${content.replace(/</g,'&lt;')}</pre></body></html>`); w.document.close(); w.print() }
+  return (
     <>
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-parchment-100 border-b border-parchment-300">
-        <div className="flex items-center gap-1.5 flex-1">
-          <CheckCircle size={13} className="text-forest-500" />
-          <span className="text-xs text-gray-500 font-medium">ATS ready · plain text</span>
-        </div>
-        <div className="flex gap-1.5">
-          {[{ icon: Copy, label: 'Copy', fn: copy }, { icon: Download, label: '.txt', fn: download }, { icon: Printer, label: 'PDF', fn: print }].map(({ icon: Icon, label, fn }) => (
-            <button key={label} onClick={fn} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 bg-white border border-parchment-300 px-2.5 py-1 rounded-lg transition-colors">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: T.bg, borderBottom: `1px solid ${T.border}` }}>
+        <CheckCircle size={13} color={T.green} />
+        <span style={{ fontSize: 12, color: T.inkSoft, fontWeight: 500, flex: 1 }}>ATS-ready · plain text format</span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[{ icon: Copy, label: 'Copy', fn: copy }, { icon: Download, label: '.txt', fn: download }, { icon: Printer, label: 'Print / PDF', fn: print }].map(({ icon: Icon, label, fn }) => (
+            <button key={label} onClick={fn}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.inkSoft, background: T.surface, border: `1px solid ${T.border}`, padding: '5px 10px', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
               <Icon size={11} /> {label}
             </button>
           ))}
         </div>
       </div>
-      <pre className="p-5 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap break-words font-sans max-h-[520px] overflow-y-auto">{content}</pre>
+      <pre style={{ padding: '20px 22px', fontSize: 13, lineHeight: 1.75, color: T.inkMid, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: "'Courier New', monospace", maxHeight: 540, overflowY: 'auto', margin: 0 }}>{content}</pre>
     </>
   )
-
-  try {
-    const data = JSON.parse(content.replace(/```json|```/g, '').trim())
-    if (type === 'review') return <ReviewPanel data={data} />
-    if (type === 'interview') return <InterviewPanel data={data} />
-    if (type === 'flags') return <FlagsPanel data={data} />
-    if (type === 'keywords') return <KeywordsPanel data={data} />
-  } catch {}
-  return <pre className="p-5 text-xs whitespace-pre-wrap font-sans text-gray-600">{content}</pre>
 }
 
+// ── Output dispatcher ──────────────────────────────────────────
+function OutputPanel({ type, content }: { type: string; content: string }) {
+  if (!content) return null
+  if (['cv', 'cl'].includes(type)) return <TextPanel content={content} />
+  try {
+    const data = JSON.parse(content.replace(/```json|```/g, '').trim())
+    if (type === 'review')      return <ReviewPanel data={data} />
+    if (type === 'deep_review') return <DeepReviewPanel data={data} />
+    if (type === 'interview')   return <InterviewPanel data={data} />
+    if (type === 'flags')       return <FlagsPanel data={data} />
+    if (type === 'keywords')    return <KeywordsPanel data={data} />
+  } catch {}
+  return <pre style={{ padding: '20px', fontSize: 12, color: T.inkSoft, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{content}</pre>
+}
+
+// ── Chip component ─────────────────────────────────────────────
+function Chip({ label, active, onClick, onRemove, dashed }: { label: string; active: boolean; onClick: () => void; onRemove?: () => void; dashed?: boolean }) {
+  return (
+    <button onClick={onClick}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.12s', border: `1.5px ${dashed ? 'dashed' : 'solid'} ${active ? T.greenBorder : T.border}`, background: active ? T.greenLight : T.surface, color: active ? T.greenDark : T.inkSoft }}>
+      {label}
+      {onRemove && <span onClick={e => { e.stopPropagation(); onRemove() }} style={{ marginLeft: 2, color: T.inkFaint, fontSize: 14, lineHeight: 1 }}>×</span>}
+    </button>
+  )
+}
+
+// ── Main generate tab ──────────────────────────────────────────
 export function GenerateTab() {
   const { profileData, jdText, setJdText, jdUrl, setJdUrl, tone, setTone, sector, setSector, customSectors, setCustomSectors, companyBrief, setCompanyBrief, outputs, setOutput, token, setUpgradeMsg } = useApp()
   const [activeOut, setActiveOut] = useState<string>('cv')
   const [activeGenType, setActiveGenType] = useState<string | null>(null)
   const [briefLoading, setBriefLoading] = useState(false)
   const [attachments, setAttachments] = useState<any[]>([])
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const senLabel = SENIORITY.find(s => s.key === profileData.profile.seniority)?.label || 'Mid-level'
 
   const buildRequestBody = (type: string) => {
     const textParts: string[] = []
-    const imgBlocks: any[] = []
     if (jdText) textParts.push('JOB DESCRIPTION:\n' + jdText)
     if (jdUrl) textParts.push('Job URL: ' + jdUrl)
-    attachments.forEach(a => {
-      if (a.error) return
-      if (a.text) textParts.push(`ATTACHED (${a.name}):\n${a.text.substring(0, 30000)}`)
-      if (a.base64 && a.isImage) imgBlocks.push({ type: 'image', source: { type: 'base64', media_type: a.name.endsWith('.png') ? 'image/png' : 'image/jpeg', data: a.base64 } })
-    })
+    attachments.forEach(a => { if (!a.error && a.text) textParts.push(`ATTACHED (${a.name}):\n${a.text.substring(0, 30000)}`) })
     return {
       type,
       data: {
@@ -220,8 +366,8 @@ export function GenerateTab() {
         jobs: profileData.jobs.map(j => j.isGap
           ? { isGap: true, gapReason: j.gapReason, dates: `${fmtDate(j.startMonth, j.startYear, false)} – ${fmtDate(j.endMonth, j.endYear, false)}` }
           : { title: j.title, company: j.company, location: j.location, dates: `${fmtDate(j.startMonth, j.startYear, false)} – ${fmtDate(j.endMonth, j.endYear, j.current)}`, achievements: j.achievements.filter(a => a.trim()) }),
-        education: profileData.education.map(e => ({ degree: e.degree, institution: e.institution, location: e.location, grade: e.grade, dates: `${fmtDate(e.startMonth, e.startYear, false)} – ${fmtDate(e.endMonth, e.endYear, false)}`, notes: e.notes })),
-        qualifications: profileData.qualifications.filter(q => q.title && q.body).map(q => ({ title: q.title, body: q.body, reference: q.reference, achieved: fmtDate(q.achievedMonth, q.achievedYear, false), expiry: q.expiry, notes: q.notes })),
+        education: profileData.education.map(e => ({ degree: e.degree, institution: e.institution, grade: e.grade, dates: `${e.startYear} – ${e.endYear}`, notes: e.notes })),
+        qualifications: profileData.qualifications.filter(q => q.title).map(q => ({ title: q.title, body: q.body, year: q.year })),
         skills: profileData.skills.map(s => ({ category: s.category, skills: s.tags, context: s.context || '' })),
       },
       jdContext: textParts.join('\n\n——\n\n'),
@@ -232,7 +378,7 @@ export function GenerateTab() {
     }
   }
 
-  const { complete, isLoading, error } = useCompletion({
+  const { complete, isLoading } = useCompletion({
     api: '/api/generate',
     headers: { Authorization: `Bearer ${token}` },
     onFinish: (_, completion) => {
@@ -264,10 +410,11 @@ export function GenerateTab() {
       const reader = res.body!.getReader(); const decoder = new TextDecoder(); let result = ''
       while (true) {
         const { done, value } = await reader.read(); if (done) break
-        const chunk = decoder.decode(value); result += chunk
+        result += decoder.decode(value)
       }
       const match = result.match(/\{[\s\S]*\}/)
       if (match) setCompanyBrief(match[0])
+      else toast.error('Could not parse company brief')
     } catch (e: any) { toast.error('Research failed: ' + e.message) }
     setBriefLoading(false)
   }
@@ -275,17 +422,11 @@ export function GenerateTab() {
   function handleFiles(files: FileList) {
     Array.from(files).forEach(file => {
       const ext = file.name.split('.').pop()?.toLowerCase()
-      const isImage = ['png', 'jpg', 'jpeg'].includes(ext || '')
-      const entry: any = { id: uid(), name: file.name, isImage, text: '', base64: '', error: false }
+      const entry: any = { id: uid(), name: file.name, text: '', error: false }
       setAttachments(prev => [...prev, entry])
       const r = new FileReader()
-      if (isImage || ext === 'pdf') {
-        r.onload = ev => { entry.base64 = (ev.target!.result as string).split(',')[1]; setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, base64: entry.base64 } : a)) }
-        r.readAsDataURL(file)
-      } else {
-        r.onload = ev => { entry.text = ev.target!.result as string; setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, text: entry.text } : a)) }
-        r.readAsText(file)
-      }
+      r.onload = ev => { entry.text = ev.target!.result as string; setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, text: entry.text } : a)) }
+      r.readAsText(file)
     })
   }
 
@@ -295,133 +436,171 @@ export function GenerateTab() {
   const outputTabs = Object.entries(outputs).filter(([, v]) => v).map(([k]) => k)
 
   return (
-    <div>
-      <SectionHeader eyebrow="Step 6" title="Generate" sub="Paste the job description — every tool uses it." />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Header */}
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.green, marginBottom: 4 }}>Step 6</div>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em', marginBottom: 3 }}>Generate</h2>
+        <p style={{ fontSize: 13, color: T.inkSoft }}>Paste a job description — all eight tools use it to tailor your application.</p>
+      </div>
 
-      {/* Settings */}
-      <Card className="mb-4">
-        <div className="flex items-center gap-3 flex-wrap mb-3">
-          <span className="text-xs text-gray-500">Level: <strong className="text-forest-700">{senLabel}</strong></span>
-          <div className="flex flex-wrap gap-1.5 ml-auto">
-            {TONES.map(t => <Chip key={t.key} label={t.label} active={tone === t.key} onClick={() => setTone(t.key)} />)}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 self-center">Sector</span>
-          {[...SECTORS, ...customSectors.map(c => ({ key: 'custom_' + c, label: c }))].map(s => (
-            <Chip key={s.key} label={s.label} active={sector === s.key} onClick={() => setSector(s.key)}
-              onRemove={s.key.startsWith('custom_') ? () => { setCustomSectors(customSectors.filter(c => c !== s.label)); if (sector === s.key) setSector('general') } : undefined}
-            />
-          ))}
-          <Chip label="+ Add" active={false} dashed onClick={() => { const n = prompt('Sector name:'); if (n) setCustomSectors([...customSectors, n]) }} />
-        </div>
-      </Card>
-
-      {/* Company brief panel */}
+      {/* Company brief */}
       <AnimatePresence>
         {briefLoading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white border border-forest-200 rounded-2xl p-5 mb-4 flex items-center gap-3 text-forest-600">
-            <Loader2 size={18} className="animate-spin" />
-            <div><div className="text-sm font-medium">Researching company…</div><div className="text-xs text-forest-400 mt-0.5">Searching web · reading news · analysing culture signals</div></div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: T.greenLight, border: `1px solid ${T.greenBorder}`, borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Loader2 size={16} style={{ animation: 'spin 0.7s linear infinite', color: T.green, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.greenDark }}>Researching company…</div>
+              <div style={{ fontSize: 11, color: T.green, marginTop: 1 }}>Searching web · reading news · analysing culture</div>
+            </div>
           </motion.div>
         )}
         {parsedBrief && !briefLoading && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="border border-forest-200 rounded-2xl overflow-hidden mb-4">
-            <div className="bg-forest-50 border-b border-forest-200 px-4 py-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-forest-500 flex items-center justify-center text-white text-sm">🏢</div>
-              <div className="flex-1"><div className="text-sm font-semibold text-forest-700">{parsedBrief.name || 'Company research'}</div><div className="text-xs text-forest-500">Live research · feeds into all outputs below</div></div>
-              <button onClick={() => setCompanyBrief('')} className="text-forest-400 hover:text-red-500 transition-colors"><X size={15} /></button>
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ background: T.greenLight, borderBottom: `1px solid ${T.greenBorder}`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Building2 size={16} color={T.green} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.greenDark }}>{parsedBrief.name || 'Company research'}</div>
+                <div style={{ fontSize: 11, color: T.green }}>Live research — feeds into all outputs below</div>
+              </div>
+              <button onClick={() => setCompanyBrief('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.inkFaint, display: 'flex' }}><X size={15} /></button>
             </div>
-            <div className="bg-white p-4">
-              {parsedBrief.summary && <p className="text-sm text-gray-600 leading-relaxed mb-3">{parsedBrief.summary}</p>}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                {[['Industry', parsedBrief.industry], ['Size', parsedBrief.size], ['Stage', parsedBrief.revenue], ['HQ', parsedBrief.hq]].filter(([, v]) => v).map(([k, v]) => (
-                  <div key={k} className="bg-parchment-100 rounded-lg px-3 py-2">
-                    <div className="text-[10px] font-bold tracking-wider text-gray-400 uppercase mb-0.5">{k}</div>
-                    <div className="text-xs font-medium text-gray-800">{v}</div>
+            <div style={{ padding: '14px 16px' }}>
+              {parsedBrief.summary && <p style={{ fontSize: 13, color: T.inkMid, lineHeight: 1.6, marginBottom: 12 }}>{parsedBrief.summary}</p>}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginBottom: 10 }}>
+                {[['Industry', parsedBrief.industry], ['Size', parsedBrief.size], ['Revenue', parsedBrief.revenue], ['HQ', parsedBrief.hq]].filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k as string} style={{ background: T.bg, borderRadius: 8, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.inkFaint, marginBottom: 3 }}>{k}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: T.inkMid }}>{v}</div>
                   </div>
                 ))}
               </div>
-              {parsedBrief.talkingPoints && <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">💬 <strong>Use in cover letter/interview:</strong> {parsedBrief.talkingPoints}</div>}
+              {parsedBrief.talkingPoints && (
+                <div style={{ background: T.amberBg, border: `1px solid ${T.amberBorder}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
+                  💬 <strong>Use in interview:</strong> {parsedBrief.talkingPoints}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* JD input */}
-      <Card className="mb-4">
-        <div className="flex items-end gap-2 mb-3">
-          <Field label="Job posting URL" className="flex-1"><Input value={jdUrl} onChange={e => setJdUrl(e.target.value)} placeholder="https://company.com/careers/role" /></Field>
-          <Button variant="secondary" size="sm" loading={briefLoading} onClick={fetchCompanyBrief} icon={<Search size={13} />} className="mb-0.5 whitespace-nowrap">Research</Button>
+      <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+          <div style={{ flex: 1 }}>
+            <Field label="Job URL">
+              <Input value={jdUrl} onChange={e => setJdUrl(e.target.value)} placeholder="https://company.com/careers/job" />
+            </Field>
+          </div>
+          <Button variant="secondary" size="md" loading={briefLoading} onClick={fetchCompanyBrief} icon={<Search size={13} />}>Research</Button>
         </div>
-        {/* Attachments */}
+
+        <Field label="Job description" hint="Paste the full posting — company overview, requirements, nice-to-haves">
+          <textarea
+            value={jdText}
+            onChange={e => setJdText(e.target.value)}
+            rows={10}
+            placeholder={'Paste the full job description here…\n\nThe more detail, the better every tool performs. Include company blurb, requirements, and nice-to-haves.'}
+            style={{ width: '100%', background: T.bg, border: `1.5px solid ${T.border}`, borderRadius: 10, padding: '10px 13px', fontFamily: 'var(--font-sans)', fontSize: 13, color: T.ink, outline: 'none', resize: 'vertical', lineHeight: 1.65, boxSizing: 'border-box', transition: 'all 0.15s' }}
+            onFocus={e => { e.target.style.borderColor = T.green; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.1)'; e.target.style.background = T.surface }}
+            onBlur={e => { e.target.style.borderColor = T.border; e.target.style.boxShadow = 'none'; e.target.style.background = T.bg }}
+          />
+        </Field>
+
+        {/* File drop zone */}
         <div
-          className="border-2 border-dashed border-parchment-400 rounded-xl p-4 text-center cursor-pointer hover:border-forest-300 hover:bg-forest-50/30 transition-all mb-3"
           onClick={() => fileRef.current?.click()}
           onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
+          style={{ border: `1.5px dashed ${T.border}`, borderRadius: 10, padding: '12px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = T.green; (e.currentTarget as HTMLElement).style.background = T.greenLight }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = T.border; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
         >
-          <div className="text-lg opacity-40 mb-1">📎</div>
-          <div className="text-xs font-medium text-gray-500">Click or drag to upload · PDF, DOCX, TXT, PNG, JPG</div>
+          <div style={{ fontSize: 12, color: T.inkFaint }}>📎 Click or drag to attach files — PDF, DOCX, TXT</div>
         </div>
-        <input ref={fileRef} type="file" multiple accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg" className="hidden" onChange={e => e.target.files && handleFiles(e.target.files)} />
+        <input ref={fileRef} type="file" multiple accept=".pdf,.docx,.txt,.png,.jpg" style={{ display: 'none' }} onChange={e => e.target.files && handleFiles(e.target.files)} />
+
         {attachments.length > 0 && (
-          <div className="space-y-1.5 mb-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {attachments.map((a, i) => (
-              <div key={a.id} className="flex items-center gap-2 bg-parchment-100 border border-parchment-300 rounded-lg px-3 py-2">
-                <span className="text-sm">{a.isImage ? '🖼️' : a.type === 'pdf' ? '📄' : '📝'}</span>
-                <span className="flex-1 text-xs font-medium truncate">{a.name}</span>
-                <span className={clsx('text-[10px]', a.error ? 'text-red-500' : 'text-forest-600')}>{a.error ? 'Failed' : a.text ? Math.round(a.text.length / 4) + ' tokens' : 'Processing…'}</span>
-                <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 transition-colors text-sm">×</button>
+              <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px' }}>
+                <span style={{ fontSize: 14 }}>📄</span>
+                <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: T.inkMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</span>
+                <span style={{ fontSize: 11, color: a.text ? T.green : T.inkFaint }}>{a.text ? `${Math.round(a.text.length/4)} tokens` : 'Loading…'}</span>
+                <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.inkFaint, fontSize: 16, lineHeight: 1 }}>×</button>
               </div>
             ))}
           </div>
         )}
-        <Field label="Job description">
-          <Textarea value={jdText} onChange={e => setJdText(e.target.value)} rows={9} placeholder={'Paste the full job description here…\n\nThe more detail, the better every tool performs.'} />
-        </Field>
-        <Tip>Include the full posting — company blurb, requirements, nice-to-haves. All 6 tools use this to tailor your application and assess your real fit.</Tip>
-      </Card>
+      </div>
+
+      {/* Settings toggle */}
+      <div>
+        <button onClick={() => setSettingsOpen(!settingsOpen)}
+          style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: T.inkSoft, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', padding: '4px 0' }}>
+          <Sparkles size={12} />
+          Tone & sector settings
+          {settingsOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          <span style={{ fontSize: 11, color: T.inkFaint, fontWeight: 400 }}>· {senLabel} level</span>
+        </button>
+        <AnimatePresence>
+          {settingsOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+              <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: '16px 18px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.inkFaint, marginBottom: 8 }}>Tone</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {TONES.map(t => <Chip key={t.key} label={t.label} active={tone === t.key} onClick={() => setTone(t.key)} />)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.inkFaint, marginBottom: 8 }}>Sector</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {[...SECTORS, ...customSectors.map(c => ({ key: 'custom_' + c, label: c }))].map(s => (
+                      <Chip key={s.key} label={s.label} active={sector === s.key} onClick={() => setSector(s.key)}
+                        onRemove={s.key.startsWith('custom_') ? () => { setCustomSectors(customSectors.filter(c => c !== s.label)); if (sector === s.key) setSector('general') } : undefined} />
+                    ))}
+                    <Chip label="+ Add" active={false} dashed onClick={() => { const n = prompt('Sector name:'); if (n) setCustomSectors([...customSectors, n]) }} />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Generate buttons */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4">
-        {GEN_BUTTONS.map(({ type, label, icon: Icon, variant }) => (
-          <button
-            key={type}
-            onClick={() => generate(type)}
-            disabled={isLoading}
-            className={clsx(
-              'flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-semibold transition-all duration-200',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
-              VARIANT_STYLES[variant]
-            )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+        {TOOLS.map(({ type, label, icon: Icon, color, bg, border }) => (
+          <button key={type} onClick={() => generate(type)} disabled={isLoading}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderRadius: 12, border: `1.5px solid ${border}`, background: isLoading && activeGenType === type ? bg : T.surface, color, fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: isLoading ? 'not-allowed' : 'pointer', opacity: isLoading && activeGenType !== type ? 0.6 : 1, transition: 'all 0.15s' }}
+            onMouseEnter={e => { if (!isLoading) { (e.currentTarget as HTMLElement).style.background = bg; (e.currentTarget as HTMLElement).style.borderColor = color } }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = T.surface; (e.currentTarget as HTMLElement).style.borderColor = border }}
           >
-            {isLoading && activeGenType === type ? <Loader2 size={13} className="animate-spin" /> : <Icon size={13} />}
-            {isLoading && activeGenType === type ? 'Generating…' : label}
+            {isLoading && activeGenType === type
+              ? <Loader2 size={14} style={{ animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+              : <Icon size={14} style={{ flexShrink: 0 }} />
+            }
+            <span>{isLoading && activeGenType === type ? 'Working…' : label}</span>
           </button>
         ))}
       </div>
 
-      {/* Streaming output in real-time */}
-      {isLoading && activeGenType && !outputs[activeGenType] && (
-        <Card className="mb-3">
-          <div className="flex items-center gap-2 text-gray-400 text-sm p-1">
-            <Loader2 size={15} className="animate-spin text-forest-500" />
-            <span>Generating {activeGenType === 'cv' ? 'CV' : activeGenType === 'cl' ? 'cover letter' : 'analysis'}…</span>
-          </div>
-        </Card>
-      )}
-
-      {/* Output panel */}
+      {/* Output */}
       {outputTabs.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="border border-parchment-300 rounded-2xl overflow-hidden shadow-card">
-          <div className="bg-white border-b border-parchment-200 px-4 py-2.5 flex items-center gap-2 flex-wrap">
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ background: T.bg, borderBottom: `1px solid ${T.border}`, padding: '10px 14px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {outputTabs.map(t => {
-              const btn = GEN_BUTTONS.find(g => g.type === t)
+              const tool = TOOLS.find(g => g.type === t)
+              const active = activeOut === t
               return (
-                <button key={t} data-active={activeOut === t} onClick={() => setActiveOut(t)}
-                  className={clsx('text-xs font-medium px-3 py-1.5 rounded-lg border transition-all', activeOut === t ? 'bg-forest-50 border-forest-300 text-forest-700' : 'bg-parchment-50 border-parchment-300 text-gray-500 hover:text-gray-700')}>
-                  {btn?.label || t}
+                <button key={t} onClick={() => setActiveOut(t)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: active ? 700 : 500, padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${active ? (tool?.border || T.greenBorder) : T.border}`, background: active ? (tool?.bg || T.greenLight) : T.surface, color: active ? (tool?.color || T.green) : T.inkSoft, cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.12s' }}>
+                  {tool && <tool.icon size={11} />}
+                  {tool?.label || t}
                 </button>
               )
             })}
@@ -429,8 +608,8 @@ export function GenerateTab() {
           {outputs[activeOut] && <OutputPanel type={activeOut} content={outputs[activeOut]} />}
         </motion.div>
       )}
+
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
-
-function uid() { return Math.random().toString(36).slice(2) }

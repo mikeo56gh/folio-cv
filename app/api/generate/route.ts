@@ -14,17 +14,17 @@ export const maxDuration = 60
 
 // Plan limits
 const LIMITS: Record<string, Record<string, number>> = {
-  free:     { cv: 3, cl: 1, review: 1, interview: 0, flags: 0, keywords: 0, company_research: 0 },
-  sprint:   { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
-  pro:      { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
-  boost:    { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
-  recruiter:{ cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
+  free:     { cv: 3, cl: 1, review: 1, interview: 0, flags: 0, keywords: 0, company_research: 0, deep_review: 0 },
+  sprint:   { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 , deep_review: -1 },
+  pro:      { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 , deep_review: -1 },
+  boost:    { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 , deep_review: -1 },
+  recruiter:{ cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 , deep_review: -1 },
 }
 
 const FEATURE_KEY: Record<string, string> = {
   cv: 'cv', cl: 'cl', review: 'review', interview: 'interview',
   flags: 'flags', keywords: 'keywords', company_research: 'company_research',
-  strengthen_skills: 'cv', strengthen_ach: 'cv',
+  strengthen_skills: 'cv', strengthen_ach: 'cv', deep_review: 'deep_review',
 }
 
 async function checkAuth(request: Request) {
@@ -149,6 +149,62 @@ function buildPrompt(type: string, data: any, jdContext: string, companyBrief: s
     company_research: `You are a business intelligence analyst. Research the company from this job posting using your knowledge.\n\n${fullCtx}\n\nReturn ONLY valid JSON:\n{"name":"<company>","industry":"<sector>","size":"<employees>","founded":"<year>","hq":"<city>","revenue":"<stage/revenue>","products":"<what they do>","summary":"<3-4 sentences>","insights":["<role-relevant insight>","<strategic priority>","<competitive position>"],"recentNews":["<news + approx date>","<news>","<news>"],"cultureSignals":"<2-3 sentences>","talkingPoints":"<2-3 specific things to mention>"}\n\nReturn ONLY the JSON.`,
 
     strengthen_skills: `CV expert. Enrich skill categories with specific evidence from experience.\n\nEXPERIENCE:\n${(data?.jobs || []).filter((j: any) => !j.isGap).map((j: any) => `${j.title} at ${j.company}: ${(j.achievements || []).join(' | ')}`).join('\n')}\n\nSKILL CATEGORIES:\n${JSON.stringify((data?.skills || []).map((s: any) => ({ id: s.id, category: s.category, tags: s.tags })))}\n\nReturn ONLY valid JSON: [{"id":<number>,"context":"<one evidenced sentence, or empty string for pure technical categories>"}]`,
+
+    deep_review: `You are a senior executive recruiter and career coach with 20 years of experience. Produce a brutally honest, forensic assessment.
+
+CANDIDATE DATA:
+${JSON.stringify(data, null, 2)}
+
+${fullCtx}
+
+Return ONLY valid JSON with this exact structure:
+{
+  "overallFit": <0-100 overall fit percentage>,
+  "oneLiner": "<One sharp sentence summarising the candidate's position — e.g. 'Strong technical match but a sector and scope gap that a compelling narrative can partially bridge'>",
+  "assessment": "<3-4 paragraph honest assessment. What is their genuine position? What does the JD really require vs what they bring? Be specific about transferable strengths and be honest about gaps. Reference actual data from their profile.>",
+  "gaps": [
+    {
+      "type": "<'Sector' | 'Scope' | 'Technical' | 'Experience' | 'Geographic'>",
+      "title": "<gap title>",
+      "addressable": <true if addressable in cover letter narrative, false if structural>,
+      "advice": "<specific advice on how to address it, or why it can't be addressed>"
+    }
+  ],
+  "cvScore": {
+    "fit": <0-100>,
+    "aiRisk": "<'Low' | 'Medium' | 'High'>",
+    "notes": "<2-3 sentences on CV strengths and what to watch for an AI detector>"
+  },
+  "clScore": {
+    "fit": <0-100>,
+    "aiRisk": "<'Low' | 'Medium' | 'High'>",
+    "notes": "<2-3 sentences on cover letter approach and AI detection risk>"
+  },
+  "options": [
+    {
+      "label": "<e.g. 'Submit as-is'>",
+      "description": "<2-3 sentences on this approach, what it prioritises, and what it trades off>",
+      "recommendation": "<brief recommendation note>",
+      "recommended": <true | false — only one should be true>
+    },
+    {
+      "label": "<e.g. 'Get a referral first'>",
+      "description": "<2-3 sentences>",
+      "recommendation": "<brief note>",
+      "recommended": <true | false>
+    },
+    {
+      "label": "<e.g. 'Use as door-opener for a smaller role'>",
+      "description": "<2-3 sentences>",
+      "recommendation": "<brief note>",
+      "recommended": <true | false>
+    }
+  ],
+  "honestRead": "<2-3 paragraphs of honest strategic read. What does the recruiter really think when they see this application? What are the realistic outcomes? What would tip the balance? Be direct — this is what a trusted mentor would tell them, not a CV coach trying to be encouraging.>",
+  "interviewPrepNote": "<If they get an interview, what is the one thing they absolutely must prepare? e.g. 'The multi-country scope question will come in the first 10 minutes — prepare a specific answer for why you're ready to step up from UK multi-site to European regional.'>"
+}
+
+Return ONLY the JSON.`,
 
     strengthen_ach: `CV expert. Add metrics to unquantified achievement bullets.\n\n${JSON.stringify(data)}\n\nReturn ONLY valid JSON: [{"jobId":<id>,"idx":<index>,"improved":"<improved bullet with metrics — flag estimates with (est.)>"}]`,
   }

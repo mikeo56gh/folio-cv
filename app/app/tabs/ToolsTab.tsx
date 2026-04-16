@@ -552,30 +552,35 @@ export function ToolsTab({ initialSection, salaryPreset }: { initialSection?: st
     (initialSection as any) || 'linkedin'
   )
 
+  const tabs = [
+    { key: 'linkedin', label: 'LinkedIn optimiser', icon: Linkedin },
+    { key: 'salary',   label: 'Salary coach',       icon: TrendingUp },
+    { key: 'alerts',   label: 'Job alerts',          icon: Bell },
+  ]
+
   return (
     <div>
-      <SectionHeader title="Tools" sub="LinkedIn optimiser, salary coach, and weekly job alerts" />
-      <div className="flex flex-wrap gap-2 mb-5">
-        {[
-          { key: 'linkedin', label: 'LinkedIn optimiser', icon: Linkedin },
-          { key: 'salary',   label: 'Salary coach',       icon: TrendingUp },
-          { key: 'alerts',   label: 'Job alerts',          icon: Bell },
-        ].map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setSection(key as any)}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all',
-              section === key
-                ? 'bg-forest-50 border-forest-300 text-forest-700'
-                : 'bg-white border-parchment-300 text-gray-500 hover:text-gray-700'
-            )}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#16a34a', marginBottom: 4 }}>Power tools</div>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', marginBottom: 3 }}>Tools</h2>
+        <p style={{ fontSize: 13, color: '#6b7280' }}>LinkedIn optimiser, salary negotiation coach, and weekly job alerts.</p>
       </div>
+
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+        {tabs.map(({ key, label, icon: Icon }) => {
+          const active = section === key
+          return (
+            <button key={key} onClick={() => setSection(key as any)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 10, border: `1.5px solid ${active ? '#bbf7d0' : '#e5e7eb'}`, background: active ? '#dcfce7' : '#fff', color: active ? '#15803d' : '#6b7280', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: active ? 700 : 500, cursor: 'pointer', transition: 'all 0.12s' }}>
+              <Icon size={14} />
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
       <AnimatePresence mode="wait">
         <motion.div key={section} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
           {section === 'linkedin' && <LinkedInOptimiser />}
