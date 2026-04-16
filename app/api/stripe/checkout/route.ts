@@ -1,6 +1,6 @@
 import Stripe from 'stripe'
-import { queryOne, execute } from '../../../lib/db'
-import { getAuthUser, getOrCreateUser } from '../../../lib/auth'
+import { queryOne, execute } from '../../../../lib/db'
+import { getAuthUser, getOrCreateUser } from '../../../../lib/auth'
 
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -23,10 +23,7 @@ export async function POST(request: Request) {
 
   let customerId = userRecord?.stripe_customer_id
   if (!customerId) {
-    const customer = await getStripe().customers.create({
-      email,
-      metadata: { user_id: userId },
-    })
+    const customer = await getStripe().customers.create({ email, metadata: { user_id: userId } })
     customerId = customer.id
     await execute('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, userId])
   }
