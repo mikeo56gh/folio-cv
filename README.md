@@ -3,7 +3,7 @@
 ## What's in this package
 
 ```
-folio-v2/
+folio-v2/  
 ├── app/
 │   ├── page.tsx                    ← Landing page (Sprint plan highlighted)
 │   ├── auth/page.tsx               ← Sign up / sign in / Google OAuth
