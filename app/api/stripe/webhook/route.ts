@@ -1,7 +1,5 @@
 import Stripe from 'stripe'
-import { queryOne, execute } from '../../../lib/db'
-
-export const config = { api: { bodyParser: false } }
+import { execute } from '../../../../lib/db'
 
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
@@ -48,26 +46,19 @@ export async function POST(request: Request) {
       }
       case 'invoice.payment_failed': {
         const invoice = data.object as Stripe.Invoice
-        await execute(
-          'UPDATE users SET subscription_status = $1 WHERE stripe_customer_id = $2',
-          ['past_due', invoice.customer]
-        )
+        await execute('UPDATE users SET subscription_status = $1 WHERE stripe_customer_id = $2', ['past_due', invoice.customer])
         break
       }
       case 'invoice.payment_succeeded': {
         const invoice = data.object as Stripe.Invoice
         if (invoice.billing_reason === 'subscription_cycle') {
-          await execute(
-            "UPDATE users SET usage = '{}', usage_reset_at = NOW(), subscription_status = 'active' WHERE stripe_customer_id = $1",
-            [invoice.customer]
-          )
+          await execute("UPDATE users SET usage = '{}', usage_reset_at = NOW(), subscription_status = 'active' WHERE stripe_customer_id = $1", [invoice.customer])
         }
         break
       }
     }
     return new Response(JSON.stringify({ received: true }), { status: 200 })
   } catch (err: any) {
-    console.error(`Error handling ${type}:`, err)
     return new Response(JSON.stringify({ error: 'Handler failed' }), { status: 500 })
   }
 }
