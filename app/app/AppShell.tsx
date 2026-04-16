@@ -363,18 +363,28 @@ export default function AppPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    const supabase = getSupabase()
-    getAuth().getSession().then((session: any) => {
-      if (!session) router.replace('/auth')
-      else setSession(session)
-      setLoading(false)
+useEffect(() => {
+    const auth = getAuth()
+
+    auth.getSession()
+      .then((session: any) => {
+        if (!session) router.replace('/auth')
+        else setSession(session)
+        setLoading(false)
+      })
+      .catch(() => {
+        router.replace('/auth')
+        setLoading(false)
+      })
+
+    const listener = auth.$store?.subscribe?.(() => {
+      auth.getSession().then((session: any) => {
+        if (!session) router.replace('/auth')
+        else setSession(session)
+      }).catch(() => router.replace('/auth'))
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) router.replace('/auth')
-      else setSession(session)
-    })
-    return () => subscription.unsubscribe()
+
+    return () => { if (listener) listener() }
   }, [router])
 
   if (loading) return (
