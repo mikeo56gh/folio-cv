@@ -8,7 +8,6 @@ export function ProfileTab() {
   const [showOptional, setShowOptional] = useState(false)
   const { profile: prof } = profileData
 
-
   return (
     <div>
       <SectionHeader eyebrow="Step 1" title="Personal profile" sub="Your contact details and career level. Used on every CV and cover letter." />
