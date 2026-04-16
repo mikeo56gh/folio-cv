@@ -1,6 +1,6 @@
 # Folio v2 — Phase 1 complete
 
-## What's in this package
+## What's in this package  
 
 ```
 folio-v2/
