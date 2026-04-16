@@ -1,29 +1,17 @@
 'use client'
+import { useState } from 'react'
 import { useApp, SENIORITY } from '../context'
-import { Card, Field, Input, LocationInput, SectionHeader, CompletenessBar, Guidance } from '../../../components/ui'
+import { Card, Field, Input, LocationInput, SectionHeader, Guidance } from '../../../components/ui'
 
 export function ProfileTab() {
   const { profileData, updateProfile } = useApp()
+  const [showOptional, setShowOptional] = useState(false)
   const { profile: prof } = profileData
 
-  const completenessChecks = [
-    { label: 'Name & email',           ok: !!(prof.name && prof.email) },
-    { label: 'LinkedIn URL',            ok: !!prof.linkedin },
-    { label: 'Phone & location',        ok: !!(prof.phone && prof.location) },
-    { label: 'Work experience',         ok: profileData.jobs.some(j => !j.isGap && j.title && j.company) },
-    { label: 'Quantified achievements', ok: profileData.jobs.some(j => j.achievements.some(a => /\d/.test(a))) },
-    { label: 'Education',               ok: profileData.education.some(e => e.degree && e.institution) },
-    { label: 'Qualifications',          ok: profileData.qualifications.some(q => q.title && q.body) },
-    { label: 'Skills added',            ok: profileData.skills.some(s => s.tags.length > 0) },
-    { label: 'Skills with context',     ok: profileData.skills.some(s => (s.context || '').trim().length > 5) },
-    { label: 'GitHub or portfolio',     ok: !!(prof.github || prof.website) },
-  ]
 
   return (
     <div>
       <SectionHeader eyebrow="Step 1" title="Personal profile" sub="Your contact details and career level. Used on every CV and cover letter." />
-      <CompletenessBar checks={completenessChecks} />
-
       <Card style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 16 }}>Contact details</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
@@ -44,12 +32,23 @@ export function ProfileTab() {
               <Input value={prof.linkedin} onChange={e => updateProfile('linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourname" />
             </Field>
           </div>
-          <Field label="GitHub">
-            <Input value={prof.github} onChange={e => updateProfile('github', e.target.value)} placeholder="https://github.com/yourname" />
-          </Field>
-          <Field label="Portfolio / website">
-            <Input value={prof.website} onChange={e => updateProfile('website', e.target.value)} placeholder="https://yoursite.com" />
-          </Field>
+          {(prof.github || prof.website || showOptional) ? (
+            <>
+              <Field label="GitHub" hint="Optional — only include if it has recent, quality work">
+                <Input value={prof.github} onChange={e => updateProfile('github', e.target.value)} placeholder="https://github.com/yourname" />
+              </Field>
+              <Field label="Portfolio / website" hint="Optional">
+                <Input value={prof.website} onChange={e => updateProfile('website', e.target.value)} placeholder="https://yoursite.com" />
+              </Field>
+            </>
+          ) : (
+            <div style={{ gridColumn: '1/-1' }}>
+              <button type="button" onClick={() => setShowOptional(true)}
+                style={{ fontSize: 12, color: '#16a34a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600, padding: 0 }}>
+                + Add GitHub or portfolio URL (optional)
+              </button>
+            </div>
+          )}
         </div>
       </Card>
 
