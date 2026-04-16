@@ -1,6 +1,6 @@
 import Stripe from 'stripe'
-import { queryOne } from '../../../lib/db'
-import { getAuthUser } from '../../../lib/auth'
+import { queryOne } from '../../../../lib/db'
+import { getAuthUser } from '../../../../lib/auth'
 
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
 
