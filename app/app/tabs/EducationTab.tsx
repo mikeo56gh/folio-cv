@@ -1,1 +1,0 @@
-export { EducationTab } from './ExperienceTab'
