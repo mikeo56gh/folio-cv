@@ -1,5 +1,5 @@
-import { queryOne, execute } from '../../../lib/db'
-import { getAuthUser, getOrCreateUser } from '../../../lib/auth'
+import { query, execute } from '../../../../lib/db'
+import { getAuthUser, getOrCreateUser } from '../../../../lib/auth'
 
 const COUNTRY_CODES: Record<string, string> = {
   'uk': 'gb', 'united kingdom': 'gb', 'england': 'gb', 'scotland': 'gb', 'wales': 'gb',
