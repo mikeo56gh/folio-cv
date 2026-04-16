@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@supabase/supabase-js'
+import { createAuthClient } from '@neondatabase/neon-js/auth'
 import {
   User, Briefcase, GraduationCap, Award, Zap, Search, LayoutGrid,
   Clock, Wrench, Sparkles, LogOut, CreditCard, Plus, ChevronRight,
@@ -20,10 +20,7 @@ import { JobsTab } from './tabs/JobsTab'
 import { TrackerTab } from './tabs/TrackerTab'
 import { HistoryTab } from './tabs/HistoryTab'
 
-const getSupabase = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const getAuth = () => createAuthClient(process.env.NEXT_PUBLIC_NEON_AUTH_URL!)
 
 const SETUP_TABS = [
   { id: 'profile',        label: 'Profile',         icon: User,          step: 1 },
@@ -368,7 +365,7 @@ export default function AppPage() {
 
   useEffect(() => {
     const supabase = getSupabase()
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getAuth().getSession().then((session: any) => {
       if (!session) router.replace('/auth')
       else setSession(session)
       setLoading(false)

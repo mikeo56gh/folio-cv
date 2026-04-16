@@ -1,12 +1,9 @@
 'use client'
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { createAuthClient } from '@neondatabase/neon-js/auth'
 import { toast } from 'sonner'
 
-const getSupabase = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const getAuth = () => createAuthClient(process.env.NEXT_PUBLIC_NEON_AUTH_URL!)
 
 // ─── TYPES ────────────────────────────────────────────────────
 export interface Job {
@@ -90,7 +87,7 @@ export function AppProvider({ children, session }: { children: React.ReactNode, 
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
   const saveTimer = useRef<NodeJS.Timeout>()
 
-  const token = session?.access_token || ''
+  const token = session?.token || session?.access_token || ''
 
   const apiFetch = useCallback(async (path: string, body?: any, method = 'GET') => {
     const res = await fetch(path, {
@@ -190,7 +187,7 @@ export function AppProvider({ children, session }: { children: React.ReactNode, 
   }
 
   async function signOut() {
-    await getSupabase().auth.signOut()
+    await getAuth().signOut()
     window.location.href = '/'
   }
 

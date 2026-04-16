@@ -1,66 +1,28 @@
-// app/api/alerts/route.ts
-// CRUD for job alerts
-import { createClient } from '@supabase/supabase-js'
-
-const getSupabaseAdmin = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-async function getUser(request: Request) {
-  const auth = request.headers.get('authorization')
-  if (!auth?.startsWith('Bearer ')) return null
-  const { data: { user } } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
-  return user
-}
+import { query, queryOne, execute } from '../../../lib/db'
+import { getAuthUser } from '../../../lib/auth'
 
 export async function GET(request: Request) {
-  const user = await getUser(request)
-  if (!user) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
-
-  const { data } = await supabaseAdmin
-    .from('job_alerts')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  return new Response(JSON.stringify({ alerts: data || [] }), { status: 200 })
+  const authUser = await getAuthUser(request)
+  if (!authUser) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
+  const alerts = await query('SELECT * FROM job_alerts WHERE user_id = $1 ORDER BY created_at DESC', [authUser.userId])
+  return new Response(JSON.stringify({ alerts }), { status: 200 })
 }
 
 export async function POST(request: Request) {
-  const user = await getUser(request)
-  if (!user) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
-
-  // Plan check
-  const { data: userRecord } = await getSupabaseAdmin().from('users').select('plan, subscription_status').eq('id', user.id).single()
-  const plan = userRecord?.plan || 'free'
-  if (!['pro', 'boost', 'sprint', 'recruiter'].includes(plan) || userRecord?.subscription_status !== 'active') {
-    return new Response(JSON.stringify({ error: 'Job alerts require an active Pro, Sprint, or Boost subscription.', upgrade: true }), { status: 403 })
-  }
-
-  const { title, keywords, location, salary_min } = await request.json()
-  if (!title || !keywords?.length) {
-    return new Response(JSON.stringify({ error: 'Title and at least one keyword are required.' }), { status: 400 })
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from('job_alerts')
-    .insert({ user_id: user.id, title, keywords, location, salary_min: salary_min || null, is_active: true })
-    .select()
-    .single()
-
-  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 })
-  return new Response(JSON.stringify({ alert: data }), { status: 201 })
+  const authUser = await getAuthUser(request)
+  if (!authUser) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
+  const { title, keywords, location, salary_min, sector, seniority } = await request.json()
+  const alert = await queryOne(
+    'INSERT INTO job_alerts (user_id, title, keywords, location, salary_min, sector, seniority) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+    [authUser.userId, title, keywords || [], location, salary_min, sector, seniority]
+  )
+  return new Response(JSON.stringify({ alert }), { status: 201 })
 }
 
 export async function DELETE(request: Request) {
-  const user = await getUser(request)
-  if (!user) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
-
+  const authUser = await getAuthUser(request)
+  if (!authUser) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
   const { id } = await request.json()
-  const { data: alert } = await getSupabaseAdmin().from('job_alerts').select('user_id').eq('id', id).single()
-  if (!alert || alert.user_id !== user.id) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 })
-
-  await getSupabaseAdmin().from('job_alerts').delete().eq('id', id)
+  await execute('DELETE FROM job_alerts WHERE id = $1 AND user_id = $2', [id, authUser.userId])
   return new Response(JSON.stringify({ success: true }), { status: 200 })
 }

@@ -1,14 +1,11 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { createAuthClient } from '@neondatabase/neon-js/auth'
 import { Eye, EyeOff, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
-const getSupabase = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const getAuth = () => createAuthClient(process.env.NEXT_PUBLIC_NEON_AUTH_URL!)
 
 function AuthForm() {
   const router = useRouter()
@@ -24,58 +21,69 @@ function AuthForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // Check if already signed in
   useEffect(() => {
-    getSupabase().auth.getSession().then(({ data: { session } }) => {
+    getAuth().getSession().then((session: any) => {
       if (session) router.push('/app')
-    })
+    }).catch(() => {})
   }, [router])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError(''); setSuccess('')
-    const supabase = getSupabase()
+    const auth = getAuth()
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } })
-        if (error) throw error
-        setSuccess('Check your email to confirm your account, then sign in.')
+        await auth.signUp.email({
+          email,
+          password,
+          name,
+          fetchOptions: { onError: (ctx: any) => { throw new Error(ctx.error?.message || 'Sign up failed') } }
+        })
+        setSuccess('Account created! Check your email to confirm, then sign in.')
         setMode('signin')
       } else if (mode === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
+        await auth.signIn.email({
+          email,
+          password,
+          fetchOptions: { onError: (ctx: any) => { throw new Error(ctx.error?.message || 'Sign in failed') } }
+        })
         const plan = params.get('plan')
         if (plan) router.push(`/app?checkout=${plan}`)
         else router.push('/app')
       } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset`
+        await auth.forgetPassword({
+          email,
+          redirectTo: `${window.location.origin}/auth/reset`,
+          fetchOptions: { onError: (ctx: any) => { throw new Error(ctx.error?.message || 'Reset failed') } }
         })
-        if (error) throw error
-        setSuccess('Reset link sent. Check your inbox.')
+        setSuccess('Reset link sent — check your inbox.')
       }
-    } catch (err: any) { setError(err.message) }
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong')
+    }
     setLoading(false)
   }
 
   async function googleAuth() {
     const plan = params.get('plan')
-    await getSupabase().auth.signInWithOAuth({
+    const auth = getAuth()
+    await auth.signIn.social({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/app${plan ? `?checkout=${plan}` : ''}` }
+      callbackURL: `${window.location.origin}/app${plan ? `?checkout=${plan}` : ''}`,
     })
   }
 
   const inputStyle: React.CSSProperties = {
     width: '100%', background: 'var(--surface-1)', border: '1.5px solid var(--ink-100)',
     borderRadius: 12, padding: '11px 16px', fontFamily: 'var(--font-sans)', fontSize: 14,
-    color: 'var(--ink-900)', outline: 'none', transition: 'all 0.15s',
+    color: 'var(--ink-900)', outline: 'none', transition: 'all 0.15s', boxSizing: 'border-box' as any,
   }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'var(--font-sans)' }}>
       {/* LEFT PANEL */}
       <div style={{ display: 'none', width: '48%', background: 'var(--forest-700)', flexDirection: 'column', justifyContent: 'space-between', padding: '48px 52px', position: 'relative', overflow: 'hidden' }} className="lg:flex flex-col">
-        {/* Background texture */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(30,110,69,0.4) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(30,110,69,0.3) 0%, transparent 50%)', pointerEvents: 'none' }} />
 
         <Link href="/" style={{ display: 'flex', alignItems: 'baseline', gap: 8, textDecoration: 'none', position: 'relative', zIndex: 1 }}>
@@ -109,10 +117,9 @@ function AuthForm() {
         </p>
       </div>
 
-      {/* RIGHT PANEL — form */}
+      {/* RIGHT PANEL */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', background: 'var(--surface-1)' }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
-          {/* Mobile logo */}
           <Link href="/" style={{ display: 'flex', alignItems: 'baseline', gap: 8, textDecoration: 'none', marginBottom: 32 }} className="lg:hidden">
             <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>Folio</span>
             <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: 'var(--forest-500)', textTransform: 'uppercase' }}>CV Builder</span>
@@ -122,7 +129,7 @@ function AuthForm() {
 
             {/* Tabs */}
             {mode !== 'reset' && (
-              <div style={{ display: 'flex', borderBottom: '1.5px solid var(--ink-100)', marginBottom: 28, gap: 0, marginLeft: -32, marginRight: -32, paddingLeft: 32, paddingRight: 32 }}>
+              <div style={{ display: 'flex', borderBottom: '1.5px solid var(--ink-100)', marginBottom: 28, marginLeft: -32, marginRight: -32, paddingLeft: 32, paddingRight: 32 }}>
                 {[['signup', 'Create account'], ['signin', 'Sign in']].map(([key, label]) => (
                   <button key={key} onClick={() => { setMode(key as any); setError(''); setSuccess('') }}
                     style={{ flex: 1, paddingBottom: 14, background: 'none', border: 'none', borderBottom: `2.5px solid ${mode === key ? 'var(--forest-500)' : 'transparent'}`, color: mode === key ? 'var(--forest-600)' : 'var(--ink-400)', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', marginBottom: -1.5 }}>
@@ -140,7 +147,7 @@ function AuthForm() {
             )}
 
             {(success || error) && (
-              <div style={{ marginBottom: 20, borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 500, background: success ? 'var(--forest-50)' : '#fef0ee', border: `1.5px solid ${success ? 'var(--forest-200)' : 'rgba(192,57,43,0.2)'}`, color: success ? 'var(--forest-600)' : '#c0392b', lineHeight: 1.5 }}>
+              <div style={{ marginBottom: 20, borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 500, background: success ? '#f0fdf4' : '#fef2f2', border: `1.5px solid ${success ? '#bbf7d0' : '#fecaca'}`, color: success ? '#15803d' : '#dc2626', lineHeight: 1.5 }}>
                 {success || error}
               </div>
             )}
@@ -191,9 +198,7 @@ function AuthForm() {
                   <div style={{ flex: 1, height: 1, background: 'var(--ink-100)' }} />
                 </div>
                 <button onClick={googleAuth}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'var(--surface-0)', border: '1.5px solid var(--ink-100)', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600, cursor: 'pointer', color: 'var(--ink-700)', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget).style.borderColor = 'var(--ink-300)'; (e.currentTarget).style.background = 'var(--surface-1)' }}
-                  onMouseLeave={e => { (e.currentTarget).style.borderColor = 'var(--ink-100)'; (e.currentTarget).style.background = 'var(--surface-0)' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'var(--surface-0)', border: '1.5px solid var(--ink-100)', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600, cursor: 'pointer', color: 'var(--ink-700)', transition: 'all 0.15s' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -207,9 +212,7 @@ function AuthForm() {
 
             {mode === 'signin' && (
               <button onClick={() => { setMode('reset'); setError(''); setSuccess('') }}
-                style={{ display: 'block', width: '100%', textAlign: 'center', marginTop: 16, background: 'none', border: 'none', fontSize: 13, color: 'var(--ink-400)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 500, transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink-700)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-400)')}>
+                style={{ display: 'block', width: '100%', textAlign: 'center', marginTop: 16, background: 'none', border: 'none', fontSize: 13, color: 'var(--ink-400)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 500 }}>
                 Forgot your password?
               </button>
             )}

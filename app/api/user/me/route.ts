@@ -1,17 +1,12 @@
-// app/api/user/me/route.ts
-import { createClient } from '@supabase/supabase-js'
-
-const getSupabaseAdmin = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { queryOne } from '../../../lib/db'
+import { getAuthUser, getOrCreateUser } from '../../../lib/auth'
 
 const PLAN_LIMITS: Record<string, Record<string, number>> = {
-  free:      { cv: 3, cl: 1, review: 1, interview: 0, flags: 0, keywords: 0, company_research: 0 },
-  sprint:    { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
-  pro:       { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
-  boost:     { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
-  recruiter: { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1 },
+  free:      { cv: 3, cl: 1, review: 1, interview: 0, flags: 0, keywords: 0, company_research: 0, deep_review: 0 },
+  sprint:    { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1, deep_review: -1 },
+  pro:       { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1, deep_review: -1 },
+  boost:     { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1, deep_review: -1 },
+  recruiter: { cv: -1, cl: -1, review: -1, interview: -1, flags: -1, keywords: -1, company_research: -1, deep_review: -1 },
 }
 
 const PLAN_NAMES: Record<string, string> = {
@@ -19,17 +14,16 @@ const PLAN_NAMES: Record<string, string> = {
 }
 
 export async function GET(request: Request) {
-  const auth = request.headers.get('authorization')
-  if (!auth?.startsWith('Bearer ')) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
+  const authUser = await getAuthUser(request)
+  if (!authUser) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
 
-  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
-  if (error || !user) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401 })
+  const { userId, email } = authUser
+  const userRecord = await getOrCreateUser(userId, email)
+  if (!userRecord) return new Response(JSON.stringify({ error: 'User not found' }), { status: 401 })
 
-  const { data: userRecord } = await getSupabaseAdmin().from('users').select('*').eq('id', user.id).single()
-
-  const plan = userRecord?.plan || 'free'
+  const plan = userRecord.plan || 'free'
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free
-  const usage = userRecord?.usage || {}
+  const usage = userRecord.usage || {}
 
   const usageSummary: Record<string, any> = {}
   for (const [feature, limit] of Object.entries(limits)) {
@@ -42,13 +36,14 @@ export async function GET(request: Request) {
   }
 
   return new Response(JSON.stringify({
-    id: user.id,
-    email: user.email,
-    fullName: userRecord?.full_name,
+    id: userId,
+    email: userRecord.email,
+    fullName: userRecord.full_name,
     plan,
     planName: PLAN_NAMES[plan] || 'Free',
-    subscriptionStatus: userRecord?.subscription_status || 'inactive',
+    subscriptionStatus: userRecord.subscription_status || 'inactive',
+    token: request.headers.get('authorization')?.replace('Bearer ', '') || '',
     usageSummary,
-    usageResetAt: userRecord?.usage_reset_at,
+    usageResetAt: userRecord.usage_reset_at,
   }), { status: 200 })
 }

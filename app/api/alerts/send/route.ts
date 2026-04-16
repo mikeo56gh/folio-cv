@@ -1,14 +1,9 @@
+import { query, execute } from '../../../../lib/db'
 // app/api/alerts/send/route.ts
 // Called by Vercel cron every Monday at 8am
 // Sends personalised job digest emails to users with active alerts
-import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 300 // 5 minutes — enough to process many users
-
-const getSupabaseAdmin = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 const ADZUNA_BASE = 'https://api.adzuna.com/v1/api/jobs'
 
@@ -126,23 +121,23 @@ export async function GET(request: Request) {
 
   try {
     // Get all active alerts with their users
-    const { data: alerts } = await supabaseAdmin
-      .from('job_alerts')
-      .select(`
-        id, title, keywords, location, salary_min, user_id,
-        users!inner(email, full_name, plan, subscription_status)
-      `)
-      .eq('is_active', true)
-      .in('users.plan', ['pro', 'boost', 'sprint', 'recruiter'])
-      .eq('users.subscription_status', 'active')
+    const alerts = await query(`
+      SELECT ja.id, ja.title, ja.keywords, ja.location, ja.salary_min, ja.user_id,
+             u.email, u.full_name, u.plan, u.subscription_status
+      FROM job_alerts ja
+      JOIN users u ON u.id = ja.user_id
+      WHERE ja.is_active = true
+        AND u.plan IN ('pro', 'boost', 'sprint', 'recruiter')
+        AND u.subscription_status = 'active'
+    `)
 
     if (!alerts?.length) {
       return new Response(JSON.stringify({ message: 'No active alerts', sent: 0 }), { status: 200 })
     }
 
-    // Group by user to send one email per user (combining multiple alerts)
+    // Group by user
     const byUser = alerts.reduce((acc: any, alert: any) => {
-      if (!acc[alert.user_id]) acc[alert.user_id] = { user: alert.users, alerts: [] }
+      if (!acc[alert.user_id]) acc[alert.user_id] = { user: { email: alert.email, full_name: alert.full_name }, alerts: [] }
       acc[alert.user_id].alerts.push(alert)
       return acc
     }, {})
@@ -165,10 +160,10 @@ export async function GET(request: Request) {
         if (ok) {
           sent++
           // Update last_sent_at for all user's alerts
-          await supabaseAdmin
-            .from('job_alerts')
-            .update({ last_sent_at: new Date().toISOString() })
-            .in('id', userAlerts.map((a: any) => a.id))
+          await execute(
+            'UPDATE job_alerts SET last_sent_at = NOW() WHERE id = ANY($1)',
+            [userAlerts.map((a: any) => a.id)]
+          )
         } else {
           failed++
         }

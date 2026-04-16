@@ -1,14 +1,10 @@
+import { queryOne } from '../../../lib/db'
+import { getAuthUser, getOrCreateUser } from '../../../lib/auth'
 // app/api/salary-coach/route.ts
 // Generates a full salary negotiation strategy:
 // assessment, counter-offer, talking points, call script, follow-up email
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
-import { createClient } from '@supabase/supabase-js'
-
-const getSupabaseAdmin = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export const maxDuration = 60
 
@@ -18,13 +14,14 @@ export async function POST(request: Request) {
   if (!auth?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
   }
-  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
-  if (error || !user) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401 })
+  const authUser = await getAuthUser(request)
+  if (!authUser) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
+  const { userId, email } = authUser
+  const user = await getOrCreateUser(userId, email)
+  if (!user) return new Response(JSON.stringify({ error: 'User not found' }), { status: 401 })
 
   // Plan check — salary coach is Boost/Sprint/Recruiter only
-  const { data: userRecord } = await supabaseAdmin
-    .from('users').select('plan').eq('id', user.id).single()
-  const plan = userRecord?.plan || 'free'
+  const plan = user?.plan || 'free'
   if (!['boost', 'sprint', 'recruiter'].includes(plan)) {
     return new Response(JSON.stringify({
       error: 'Salary negotiation coach requires Career Boost or Sprint. Upgrade to unlock.',

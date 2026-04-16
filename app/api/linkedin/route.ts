@@ -1,13 +1,9 @@
+import { queryOne } from '../../../lib/db'
+import { getAuthUser, getOrCreateUser } from '../../../lib/auth'
 // app/api/linkedin/route.ts
 // Optimises LinkedIn About section and headline for the algorithm
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
-import { createClient } from '@supabase/supabase-js'
-
-const getSupabaseAdmin = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export const maxDuration = 60
 
@@ -17,12 +13,14 @@ export async function POST(request: Request) {
   if (!auth?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
   }
-  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(auth.replace('Bearer ', ''))
-  if (error || !user) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401 })
+  const authUser = await getAuthUser(request)
+  if (!authUser) return new Response(JSON.stringify({ error: 'Unauthorised' }), { status: 401 })
+  const { userId, email } = authUser
+  const user = await getOrCreateUser(userId, email)
+  if (!user) return new Response(JSON.stringify({ error: 'User not found' }), { status: 401 })
 
   // Plan check — LinkedIn optimiser is Boost/Sprint+ only
-  const { data: userRecord } = await getSupabaseAdmin().from('users').select('plan').eq('id', user.id).single()
-  const plan = userRecord?.plan || 'free'
+  const plan = user?.plan || 'free'
   if (!['boost', 'sprint', 'recruiter'].includes(plan)) {
     return new Response(JSON.stringify({ error: 'LinkedIn optimiser requires Career Boost or Sprint. Upgrade to unlock.', upgrade: true }), { status: 403 })
   }
