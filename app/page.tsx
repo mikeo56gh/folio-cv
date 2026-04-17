@@ -1,353 +1,430 @@
 'use client'
-import { ArrowRight, CheckCircle, Zap, Shield, BarChart2, Search, FileText, Mail, Star, ChevronDown, Sparkles, TrendingUp, Linkedin } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
-const FEATURES = [
-  { icon: FileText,   label: 'ATS-optimised CV',      desc: 'Selects and reframes only your most relevant achievements per role — not a template dump.' },
-  { icon: Mail,       label: 'Cover letter',           desc: 'Unique narrative built around the company. Reads human. Never sounds generated.' },
-  { icon: BarChart2,  label: 'Fit review & score',     desc: 'Honest 0–100 match score with dimension breakdown before you waste time applying.' },
-  { icon: Search,     label: 'Company research',       desc: 'Live intel on culture, recent news, and talking points to reference in your application.' },
-  { icon: Zap,        label: 'Interview prep',         desc: '10 targeted questions with suggested angles drawn from your actual experience.' },
-  { icon: Shield,     label: 'Red flag check',         desc: 'Catches what a recruiter would silently reject — before they do.' },
-  { icon: Linkedin,   label: 'LinkedIn optimiser',     desc: 'Rewrites your About section and headline for LinkedIn\'s search algorithm.' },
-  { icon: TrendingUp, label: 'Salary coach',           desc: 'Counter-offer strategy, talking points, phone script, and follow-up email.' },
-]
+function FadeIn({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.opacity = '0'
+    el.style.transform = 'translateY(20px)'
+    el.style.transition = `opacity 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms`
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { el.style.opacity = '1'; el.style.transform = 'translateY(0)' } },
+      { threshold: 0.08 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [delay])
+  return <div ref={ref} className={className}>{children}</div>
+}
 
-const PLANS = [
-  {
-    name: 'Free',
-    price: '£0', period: '',
-    desc: 'Try it. No card needed.',
-    features: ['3 CV generations', '1 cover letter', '1 fit review', '5 job searches'],
-    cta: 'Start free', href: '/auth', highlight: false, badge: null,
-  },
-  {
-    name: 'Sprint',
-    price: '£39', period: '/3 months',
-    desc: 'Most people land a role in 3 months. Pay once, stop when you do.',
-    features: ['Everything unlimited', 'LinkedIn optimiser', 'Salary coach', 'Weekly job alerts', 'No monthly commitment'],
-    cta: 'Start Sprint', href: '/auth?plan=sprint', highlight: true, badge: 'Best value',
-  },
-  {
-    name: 'Pro',
-    price: '£9', period: '/mo',
-    desc: 'Unlimited tools. Cancel any time.',
-    features: ['Unlimited CVs & letters', 'Company research', 'Interview prep', 'Red flag check', 'Version history'],
-    cta: 'Start Pro', href: '/auth?plan=pro', highlight: false, badge: null,
-  },
-  {
-    name: 'Boost',
-    price: '£19', period: '/mo',
-    desc: 'Every tool, every advantage.',
-    features: ['Everything in Pro', 'LinkedIn optimiser', 'Salary coach', 'Weekly job alerts'],
-    cta: 'Start Boost', href: '/auth?plan=boost', highlight: false, badge: null,
-  },
-]
-
-const TESTIMONIALS = [
-  { name: 'Sarah M.', role: 'PM → Director', quote: 'The fit review told me I was a weak match before I wasted 2 hours. Found a better role through Folio a week later.' },
-  { name: 'James K.', role: 'Grad → SWE', quote: 'I was missing 8 key ATS terms. Fixed them. Got 3× more callbacks the next week.' },
-  { name: 'Rachel T.', role: 'Manager → Director', quote: 'I walked into the interview knowing their Q3 strategy. The hiring team was visibly surprised.' },
-]
-
-export default function LandingPage() {
+function Nav() {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', fn)
+    return () => window.removeEventListener('scroll', fn)
+  }, [])
   return (
-    <div className="min-h-screen" style={{ background: 'var(--surface-1)', fontFamily: 'var(--font-sans)' }}>
+    <nav style={{
+      position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 100, width: 'calc(100% - 48px)', maxWidth: 1100,
+      background: scrolled ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.7)',
+      backdropFilter: 'blur(20px)', borderRadius: 999,
+      border: '1px solid rgba(0,0,0,0.07)',
+      boxShadow: scrolled ? '0 8px 32px rgba(0,0,0,0.08)' : 'none',
+      transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+      padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        <span style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#18181b', letterSpacing: '-0.03em' }}>Folio</span>
+        <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: '0.2em', color: '#1e6e45', textTransform: 'uppercase' }}>CV</span>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Link href="/auth?mode=signin" style={{ padding: '8px 18px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: '#52525b', textDecoration: 'none' }}>Sign in</Link>
+        <Link href="/auth" style={{ padding: '8px 20px', borderRadius: 999, fontSize: 13, fontWeight: 700, background: '#18181b', color: '#fff', textDecoration: 'none', transition: 'background 0.2s' }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#1e6e45'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#18181b'}
+        >Get started free</Link>
+      </div>
+    </nav>
+  )
+}
 
-      {/* ── NAV ─────────────────────────────────────────── */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        background: 'rgba(247,249,247,0.85)', backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--ink-100)',
-      }}>
-        <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>Folio</span>
-            <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: 'var(--forest-500)', textTransform: 'uppercase' }}>CV Builder</span>
-          </div>
-          <div style={{ display: 'flex', gap: 32, fontSize: 13, fontWeight: 500, color: 'var(--ink-400)' }} className="hidden md:flex">
-            {['#features', '#pricing', '#reviews'].map((h, i) => (
-              <a key={h} href={h} style={{ color: 'var(--ink-400)', textDecoration: 'none', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink-900)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-400)')}>
-                {['Features', 'Pricing', 'Reviews'][i]}
-              </a>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link href="/auth" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-500)', padding: '8px 14px', textDecoration: 'none', borderRadius: 10, transition: 'color 0.15s' }}>Sign in</Link>
-            <Link href="/auth?mode=signup" style={{ fontSize: 13, fontWeight: 700, background: 'var(--forest-500)', color: '#fff', padding: '9px 18px', borderRadius: 12, textDecoration: 'none', letterSpacing: '-0.01em', boxShadow: '0 1px 2px rgba(0,0,0,0.1), 0 4px 12px rgba(30,110,69,0.25)', transition: 'all 0.15s' }}>
-              Get started free
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* ── HERO ────────────────────────────────────────── */}
-      <section style={{ paddingTop: 130, paddingBottom: 80, paddingLeft: 24, paddingRight: 24, overflow: 'hidden', position: 'relative' }}>
-        {/* Soft background orbs */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 60, left: '15%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(30,110,69,0.08) 0%, transparent 70%)', borderRadius: '50%' }} />
-          <div style={{ position: 'absolute', top: 100, right: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(212,137,10,0.06) 0%, transparent 70%)', borderRadius: '50%' }} />
-        </div>
-
-        <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
-          {/* Pill badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--forest-50)', border: '1.5px solid var(--forest-200)', borderRadius: 99, padding: '6px 16px', marginBottom: 32, fontSize: 12, fontWeight: 700, color: 'var(--forest-600)', letterSpacing: '0.02em' }}>
-            <Sparkles size={12} />
-            Powered by Claude — Anthropic's most capable AI
-          </div>
-
-          {/* Headline */}
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(42px, 7vw, 76px)', fontWeight: 700, lineHeight: 1.06, letterSpacing: '-0.03em', color: 'var(--ink-900)', marginBottom: 24, textWrap: 'balance' }}>
-            Land your next role<br />
-            <em style={{ color: 'var(--forest-500)', fontStyle: 'italic' }}>with total confidence</em>
-          </h1>
-
-          <p style={{ fontSize: 18, fontWeight: 400, color: 'var(--ink-400)', lineHeight: 1.7, maxWidth: 580, margin: '0 auto 36px', textWrap: 'balance' }}>
-            ATS-optimised CVs, tailored cover letters, live company research, and brutally honest fit reviews — built around the exact role you want.
-          </p>
-
-          {/* CTAs */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
-            <Link href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--forest-500)', color: '#fff', padding: '14px 28px', borderRadius: 14, fontWeight: 700, fontSize: 15, textDecoration: 'none', letterSpacing: '-0.01em', boxShadow: '0 2px 4px rgba(0,0,0,0.1), 0 8px 24px rgba(30,110,69,0.3)', transition: 'all 0.2s' }}>
-              Start building for free <ArrowRight size={16} />
-            </Link>
-            <a href="#features" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--surface-0)', color: 'var(--ink-600)', padding: '14px 24px', borderRadius: 14, fontWeight: 600, fontSize: 15, textDecoration: 'none', border: '1.5px solid var(--ink-100)', transition: 'all 0.2s' }}>
-              See all features <ChevronDown size={16} />
-            </a>
-          </div>
-
-          {/* Social proof */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--ink-400)', fontSize: 13 }}>
-            <div style={{ display: 'flex' }}>
-              {['#1e6e45','#2d8a57','#4a9e6e','#72b893','#a8d4ba'].map((bg, i) => (
-                <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: bg, border: '2px solid white', marginLeft: i > 0 ? -8 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'white', fontWeight: 700 }}>
-                  {String.fromCharCode(65 + i)}
-                </div>
-              ))}
-            </div>
-            <span>Trusted by <strong style={{ color: 'var(--ink-700)' }}>2,400+</strong> professionals</span>
-          </div>
-        </div>
-
-        {/* App preview mockup */}
-        <div style={{ maxWidth: 860, margin: '56px auto 0', position: 'relative' }}>
-          <div style={{ background: 'var(--surface-0)', borderRadius: 20, border: '1px solid var(--ink-100)', boxShadow: '0 4px 8px rgba(0,0,0,0.06), 0 24px 64px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-            {/* Window chrome */}
-            <div style={{ background: 'var(--surface-2)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--ink-100)' }}>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {['#ff5f57','#ffbd2e','#28c840'].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />)}
+function Hero() {
+  return (
+    <section style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', paddingTop: 100, paddingBottom: 80, background: '#fafaf9' }}>
+      <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+        <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+          <div>
+            <FadeIn delay={0}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 999, padding: '5px 14px', marginBottom: 28 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a', animation: 'pulse 2s infinite' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#15803d' }}>AI-Powered CV Builder</span>
               </div>
-              <div style={{ flex: 1, background: 'rgba(255,255,255,0.7)', borderRadius: 7, padding: '5px 12px', fontSize: 11, color: 'var(--ink-400)', margin: '0 8px', fontFamily: 'var(--font-mono)' }}>folio.cv/app</div>
-            </div>
-            {/* Content */}
-            <div style={{ padding: '28px 32px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+            </FadeIn>
+            <FadeIn delay={80}>
+              <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 4.5vw, 4.2rem)', fontWeight: 700, color: '#18181b', lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 24 }}>
+                Your CV, built to{' '}
+                <span style={{ display: 'inline-block', width: 56, height: 36, borderRadius: 10, overflow: 'hidden', verticalAlign: 'middle', margin: '0 4px' }}>
+                  <img src="https://picsum.photos/seed/hiring/112/72" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </span>
+                {' '}get the
+                <br /><em style={{ fontStyle: 'italic', color: '#1e6e45' }}>interview</em>
+              </h1>
+            </FadeIn>
+            <FadeIn delay={160}>
+              <p style={{ fontSize: 17, color: '#71717a', lineHeight: 1.7, marginBottom: 36, maxWidth: '52ch' }}>
+                Paste a job description. Folio analyses your fit, rewrites your CV to match, identifies keyword gaps, and researches the company — all in under 60 seconds.
+              </p>
+            </FadeIn>
+            <FadeIn delay={240}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Link href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#18181b', color: '#fff', textDecoration: 'none', borderRadius: 999, padding: '14px 28px', fontSize: 15, fontWeight: 700, transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)', boxShadow: '0 4px 20px rgba(24,24,27,0.25)' }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#1e6e45'; el.style.transform = 'translateY(-1px)' }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#18181b'; el.style.transform = 'translateY(0)' }}
+                >
+                  Build my CV free
+                  <span style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>→</span>
+                </Link>
+                <a href="#how" style={{ display: 'inline-flex', alignItems: 'center', color: '#52525b', textDecoration: 'none', borderRadius: 999, padding: '14px 24px', fontSize: 15, fontWeight: 600, border: '1.5px solid #e4e4e7', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#18181b'; el.style.color = '#18181b' }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#e4e4e7'; el.style.color = '#52525b' }}
+                >See how it works</a>
+              </div>
+            </FadeIn>
+            <FadeIn delay={320}>
+              <div style={{ display: 'flex', gap: 32, marginTop: 48, paddingTop: 32, borderTop: '1px solid #e4e4e7' }}>
+                {[['2,400+', 'Active users'], ['87%', 'Avg fit score'], ['60s', 'To tailor a CV']].map(([n, l]) => (
+                  <div key={l}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#18181b', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{n}</div>
+                    <div style={{ fontSize: 12, color: '#71717a', fontWeight: 500, marginTop: 2 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+          </div>
+          <FadeIn delay={200}>
+            <div style={{ position: 'relative' }}>
+              <div style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '2rem', padding: 6 }}>
+                <div style={{ background: '#fff', borderRadius: 'calc(2rem - 6px)', overflow: 'hidden', boxShadow: '0 20px 60px -15px rgba(0,0,0,0.12)' }}>
+                  <div style={{ background: '#f4f4f5', borderBottom: '1px solid #e4e4e7', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+                    <div style={{ flex: 1, background: '#e4e4e7', borderRadius: 6, height: 20, marginLeft: 8 }} />
+                  </div>
+                  <div style={{ padding: 20 }}>
+                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', marginBottom: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Fit Analysis</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ fontSize: 28, fontWeight: 900, color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>87</div>
+                        <div style={{ fontSize: 12, color: '#15803d' }}>/100 — Strong match<br /><span style={{ color: '#71717a' }}>Apply with confidence</span></div>
+                      </div>
+                    </div>
+                    {[
+                      { label: 'Keywords matched', val: '14/17', pct: 82, color: '#16a34a' },
+                      { label: 'Experience alignment', val: '4/5 roles', pct: 80, color: '#3b82f6' },
+                      { label: 'ATS compatibility', val: 'High', pct: 94, color: '#8b5cf6' },
+                    ].map(({ label, val, pct, color }) => (
+                      <div key={label} style={{ marginBottom: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <span style={{ fontSize: 12, color: '#52525b', fontWeight: 500 }}>{label}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: '#18181b' }}>{val}</span>
+                        </div>
+                        <div style={{ height: 5, background: '#f4f4f5', borderRadius: 99 }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99 }} />
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ background: '#fafaf9', border: '1px solid #e4e4e7', borderRadius: 10, padding: '10px 14px', marginTop: 8 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#a1a1aa', marginBottom: 6 }}>Missing keywords</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {['API-first', 'payment infra', 'cross-functional'].map(k => (
+                          <span key={k} style={{ fontSize: 11, fontWeight: 600, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 999, padding: '3px 10px' }}>{k}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ position: 'absolute', bottom: -16, left: -20, background: '#18181b', color: '#fff', borderRadius: 14, padding: '10px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: '#1e6e45', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>✓</div>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--forest-500)', marginBottom: 6 }}>AI-generated · ATS optimised</div>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em', marginBottom: 4 }}>Senior Product Manager — Stripe</div>
-                  <div style={{ fontSize: 13, color: 'var(--ink-400)' }}>Fit score: <span style={{ color: 'var(--forest-500)', fontWeight: 700 }}>87/100</span> · 3 keyword gaps identified</div>
+                  <div style={{ fontSize: 12, fontWeight: 700 }}>CV tailored in 52s</div>
+                  <div style={{ fontSize: 10, color: '#a1a1aa' }}>for Senior PM at Stripe</div>
                 </div>
-                {/* Score ring */}
-                <div style={{ flexShrink: 0 }}>
-                  <svg viewBox="0 0 72 72" width="72" height="72">
-                    <circle cx="36" cy="36" r="28" fill="none" stroke="var(--ink-100)" strokeWidth="5" />
-                    <circle cx="36" cy="36" r="28" fill="none" stroke="var(--forest-500)" strokeWidth="5"
-                      strokeLinecap="round" strokeDasharray="175.9" strokeDashoffset="23"
-                      transform="rotate(-90 36 36)" />
-                    <text x="36" y="33" textAnchor="middle" fontSize="16" fontWeight="800" fill="var(--forest-600)" fontFamily="var(--font-serif)">87</text>
-                    <text x="36" y="46" textAnchor="middle" fontSize="9" fill="var(--ink-400)" fontFamily="var(--font-sans)">/100</text>
-                  </svg>
-                </div>
-              </div>
-              {/* CV skeleton */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 20 }}>
-                {[1, 0.85, 0.7, 1, 0.9, 0.75].map((w, i) => (
-                  <div key={i} style={{ height: i % 3 === 0 ? 11 : 9, background: i < 3 ? 'var(--forest-100)' : 'var(--surface-2)', borderRadius: 6, width: `${w * 100}%` }} />
-                ))}
-              </div>
-              {/* Badges */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[
-                  { t: '✓ ATS keywords matched', green: true },
-                  { t: '✓ Company research applied', green: true },
-                  { t: '✓ Top 3 achievements selected', green: true },
-                  { t: '⚠ 3 flags to review', green: false },
-                ].map(({ t, green }) => (
-                  <span key={t} style={{ fontSize: 11, fontWeight: 600, padding: '4px 11px', borderRadius: 99, background: green ? 'var(--forest-50)' : 'var(--amber-light)', color: green ? 'var(--forest-600)' : 'var(--amber)', border: `1.5px solid ${green ? 'var(--forest-200)' : 'rgba(212,137,10,0.25)'}` }}>{t}</span>
-                ))}
               </div>
             </div>
-          </div>
-
-          {/* Floating insight card — right */}
-          <div style={{ position: 'absolute', right: -24, top: 32, background: 'var(--surface-0)', borderRadius: 14, border: '1px solid var(--ink-100)', padding: '14px 16px', width: 200, boxShadow: '0 4px 24px rgba(0,0,0,0.1)' }} className="hidden lg:block">
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-300)', marginBottom: 5 }}>Company insight</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-700)', lineHeight: 1.5, fontWeight: 500 }}>Stripe raised $600M Series I. Expanding into APAC payments infrastructure.</div>
-          </div>
-
-          {/* Floating keyword card — left */}
-          <div style={{ position: 'absolute', left: -24, bottom: 40, background: 'var(--surface-0)', borderRadius: 14, border: '1px solid var(--ink-100)', padding: '14px 16px', width: 190, boxShadow: '0 4px 24px rgba(0,0,0,0.1)' }} className="hidden lg:block">
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-300)', marginBottom: 5 }}>Keyword gap</div>
-            <div style={{ fontSize: 12, color: '#c0392b', lineHeight: 1.5, fontWeight: 500 }}>Missing: "API-first", "payment infrastructure", "merchant acquiring"</div>
-          </div>
+          </FadeIn>
         </div>
-      </section>
+      </div>
+    </section>
+  )
+}
 
-      {/* ── STATS ───────────────────────────────────────── */}
-      <section style={{ background: 'var(--forest-700)', padding: '48px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }} className="grid grid-cols-2 md:grid-cols-4">
-          {[['3×', 'more callbacks'], ['47%', 'faster job search'], ['£8k', 'avg salary uplift'], ['94%', 'ATS pass rate']].map(([n, l]) => (
-            <div key={l} style={{ textAlign: 'center', padding: '20px 12px' }}>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 44, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1 }}>{n}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 6, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{l}</div>
-            </div>
+function StatsBar() {
+  return (
+    <section style={{ background: '#18181b', padding: '28px 24px' }}>
+      <div className="stats-bar" style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+        {[['47%','faster application process'],['3.2×','more interview callbacks'],['60s','average tailoring time'],['2,400+','CVs generated this month']].map(([n,l]) => (
+          <div key={l} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <span style={{ fontSize: 24, fontWeight: 900, color: '#fff', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.04em' }}>{n}</span>
+            <span style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>{l}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function Features() {
+  const features = [
+    { title: 'Fit score & analysis', body: 'Paste any job description. Get an instant score out of 100 with specific reasoning — what matches, what\'s missing, whether to apply.', accent: '#1e6e45', bg: '#f0fdf4', size: 'large', icon: '◈' },
+    { title: 'CV generation', body: 'Rewrites your CV to match the role — not just keywords, but tone, seniority level, and emphasis.', accent: '#1d4ed8', bg: '#eff6ff', size: 'small', icon: '⊡' },
+    { title: 'Cover letters', body: 'One-click cover letters that sound like you wrote them — specific, direct, no clichés.', accent: '#7c3aed', bg: '#f5f3ff', size: 'small', icon: '◻' },
+    { title: 'Company research', body: 'Know funding, headcount growth, product direction, and culture signals before your interview.', accent: '#b45309', bg: '#fffbeb', size: 'large', icon: '⊕' },
+    { title: 'ATS keyword gap', body: 'Identifies every missing keyword an applicant tracking system would penalise you for.', accent: '#dc2626', bg: '#fef2f2', size: 'small', icon: '⊗' },
+    { title: 'Application tracker', body: 'Track every application, stage, and follow-up in one place.', accent: '#0369a1', bg: '#f0f9ff', size: 'small', icon: '⊞' },
+  ]
+  return (
+    <section id="how" style={{ padding: '96px 24px', background: '#fafaf9' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <FadeIn>
+          <div style={{ marginBottom: 56 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1e6e45', marginBottom: 14 }}>What Folio does</div>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 700, color: '#18181b', lineHeight: 1.15, letterSpacing: '-0.03em', maxWidth: '16ch' }}>Everything your job search needs</h2>
+          </div>
+        </FadeIn>
+        <div className="bento-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 14, gridAutoFlow: 'dense' }}>
+          {features.map((f, i) => (
+            <FadeIn key={f.title} delay={i * 60}>
+              <div style={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: 20, padding: f.size === 'large' ? 32 : 24, gridColumn: f.size === 'large' ? 'span 2' : 'span 1', transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)', height: '100%' }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-3px)'; el.style.boxShadow = '0 20px 40px -15px rgba(0,0,0,0.1)' }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none' }}
+              >
+                <div style={{ width: 40, height: 40, background: f.bg, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: f.accent, marginBottom: 16 }}>{f.icon}</div>
+                <h3 style={{ fontSize: f.size === 'large' ? 20 : 16, fontWeight: 700, color: '#18181b', marginBottom: 8, letterSpacing: '-0.02em' }}>{f.title}</h3>
+                <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.65, margin: 0 }}>{f.body}</p>
+              </div>
+            </FadeIn>
           ))}
         </div>
-      </section>
+      </div>
+    </section>
+  )
+}
 
-      {/* ── FEATURES ────────────────────────────────────── */}
-      <section id="features" style={{ padding: '96px 24px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: 'var(--forest-500)', textTransform: 'uppercase', marginBottom: 14 }}>Eight tools. One platform.</div>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', marginBottom: 14, lineHeight: 1.1 }}>
-              Every tool shares your profile.<br />
-              <span style={{ color: 'var(--forest-500)', fontStyle: 'italic' }}>No copy-pasting. Ever.</span>
-            </h2>
-            <p style={{ fontSize: 16, color: 'var(--ink-400)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>Paste a job description once. Every output — CV, letter, score, prep — is generated from the same data.</p>
+function HowItWorks() {
+  const steps = [
+    { n: '01', title: 'Build your profile', body: 'Add your experience, education, and skills once. Folio stores it as your master profile.' },
+    { n: '02', title: 'Paste a job description', body: 'Drop in the full JD from any job board. No formatting required.' },
+    { n: '03', title: 'Get your fit score', body: 'Folio scores your match, highlights gaps, and researches the employer in seconds.' },
+    { n: '04', title: 'Generate and apply', body: 'One click produces a tailored CV and cover letter ready to send.' },
+  ]
+  return (
+    <section style={{ padding: '96px 24px', background: '#18181b' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <FadeIn>
+          <div style={{ marginBottom: 64 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1e6e45', marginBottom: 14 }}>The process</div>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 700, color: '#fff', lineHeight: 1.15, letterSpacing: '-0.03em', maxWidth: '20ch' }}>From blank page to sent application in minutes</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-            {FEATURES.map(({ icon: Icon, label, desc }) => (
-              <div key={label} style={{ background: 'var(--surface-0)', border: '1.5px solid var(--ink-100)', borderRadius: 16, padding: '22px 22px', transition: 'all 0.2s', cursor: 'default' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--forest-300)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(30,110,69,0.1)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ink-100)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--forest-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                  <Icon size={18} color="var(--forest-500)" />
-                </div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink-900)', marginBottom: 6, letterSpacing: '-0.01em' }}>{label}</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-400)', lineHeight: 1.6 }}>{desc}</div>
+        </FadeIn>
+        <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+          {steps.map((s, i) => (
+            <FadeIn key={s.n} delay={i * 80}>
+              <div style={{ padding: '32px 24px', borderLeft: i === 0 ? '1px solid #3f3f46' : 'none', borderRight: '1px solid #3f3f46' }}>
+                <div style={{ fontFamily: 'Georgia, serif', fontSize: 48, fontWeight: 700, color: '#3f3f46', lineHeight: 1, marginBottom: 20, fontVariantNumeric: 'tabular-nums' }}>{s.n}</div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 10, letterSpacing: '-0.02em' }}>{s.title}</h3>
+                <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65, margin: 0 }}>{s.body}</p>
               </div>
-            ))}
-          </div>
+            </FadeIn>
+          ))}
         </div>
-      </section>
+      </div>
+    </section>
+  )
+}
 
-      {/* ── HOW IT WORKS ────────────────────────────────── */}
-      <section style={{ background: 'var(--forest-500)', padding: '96px 24px' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 12 }}>From job posting to application<br />in 3 minutes</h2>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', fontWeight: 400 }}>Most users send tailored applications in under 4 minutes.</p>
+function Testimonials() {
+  const t = [
+    { name: 'Mark', role: 'Product Manager, fintech', body: 'I applied to 12 roles in a week. Fit score kept me from wasting time on bad matches. Got 4 first-round interviews.', score: 91 },
+    { name: 'Priya', role: 'Graduate, Computer Science', body: 'The keyword gap analysis was the thing I\'d been missing. ATS kept rejecting me and I didn\'t know why until Folio showed me.', score: 84 },
+    { name: 'Daniel', role: 'Operations Director', body: 'Cover letters used to take me an hour. Folio writes a better one in 30 seconds. Company research before interviews is the real gem.', score: 88 },
+  ]
+  return (
+    <section style={{ padding: '96px 24px', background: '#fafaf9' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <FadeIn>
+          <div style={{ marginBottom: 56 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1e6e45', marginBottom: 14 }}>Results</div>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 700, color: '#18181b', lineHeight: 1.15, letterSpacing: '-0.03em' }}>People who stopped guessing</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }} className="grid grid-cols-1 md:grid-cols-3">
-            {[
-              { n: '01', title: 'Build your profile', desc: 'Add your experience once. Every achievement becomes your permanent pool.' },
-              { n: '02', title: 'Paste any job', desc: 'URL or description. Folio researches the company and builds context live.' },
-              { n: '03', title: 'Generate & submit', desc: 'Tailored CV, cover letter, and fit score. Know your odds before you apply.' },
-            ].map(s => (
-              <div key={s.n} style={{ textAlign: 'center', padding: '32px 28px' }}>
-                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 56, fontWeight: 700, color: 'rgba(255,255,255,0.2)', lineHeight: 1, marginBottom: 16 }}>{s.n}</div>
-                <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 8, letterSpacing: '-0.01em' }}>{s.title}</div>
-                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65 }}>{s.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS ────────────────────────────────── */}
-      <section id="reviews" style={{ padding: '96px 24px' }}>
-        <div style={{ maxWidth: 980, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', lineHeight: 1.1 }}>Real results</h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-            {TESTIMONIALS.map(t => (
-              <div key={t.name} style={{ background: 'var(--surface-0)', border: '1.5px solid var(--ink-100)', borderRadius: 18, padding: '28px 26px' }}>
-                <div style={{ display: 'flex', gap: 3, marginBottom: 16 }}>
-                  {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="var(--forest-500)" color="var(--forest-500)" />)}
+        </FadeIn>
+        <div className="testimonials-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+          {t.map((item, i) => (
+            <FadeIn key={item.name} delay={i * 80}>
+              <div style={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: 20, padding: 28, height: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f4f4f5', overflow: 'hidden' }}>
+                    <img src={`https://picsum.photos/seed/${item.name}/80/80`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 999, padding: '4px 12px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>{item.score}</span>
+                    <span style={{ fontSize: 11, color: '#16a34a' }}>/100</span>
+                  </div>
                 </div>
-                <p style={{ fontSize: 15, color: 'var(--ink-600)', lineHeight: 1.7, marginBottom: 20, fontStyle: 'italic' }}>&ldquo;{t.quote}&rdquo;</p>
+                <p style={{ fontSize: 14, color: '#3f3f46', lineHeight: 1.7, margin: 0, flex: 1 }}>"{item.body}"</p>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink-900)' }}>{t.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--forest-500)', marginTop: 2, fontWeight: 600 }}>{t.role}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#18181b' }}>{item.name}</div>
+                  <div style={{ fontSize: 12, color: '#71717a' }}>{item.role}</div>
                 </div>
               </div>
-            ))}
-          </div>
+            </FadeIn>
+          ))}
         </div>
-      </section>
+      </div>
+    </section>
+  )
+}
 
-      {/* ── PRICING ─────────────────────────────────────── */}
-      <section id="pricing" style={{ background: 'var(--surface-2)', padding: '96px 24px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(30px, 5vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', marginBottom: 10, lineHeight: 1.1 }}>Simple, honest pricing</h2>
-            <p style={{ fontSize: 15, color: 'var(--ink-400)' }}>One successful salary negotiation covers a year of Boost.</p>
+function Pricing() {
+  const plans = [
+    { name: 'Free', price: '£0', period: 'forever', features: ['3 CV generations', '1 cover letter', '1 fit review', 'Application tracker', 'Job search'], cta: 'Start free', highlight: false },
+    { name: 'Job Seeker Sprint', price: '£39', period: '3 months', tag: 'Most popular', features: ['Unlimited CVs', 'Unlimited cover letters', 'Unlimited fit reviews', 'LinkedIn optimiser', 'Salary coach', 'Company research', 'Deep analysis', 'No monthly commitment'], cta: 'Get Sprint', highlight: true },
+    { name: 'Pro', price: '£14', period: '/month', features: ['Unlimited CVs', 'Unlimited cover letters', 'Unlimited fit reviews', 'LinkedIn optimiser', 'Salary coach', 'Company research', 'Job alerts'], cta: 'Get Pro', highlight: false },
+  ]
+  return (
+    <section style={{ padding: '96px 24px', background: '#18181b' }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+        <FadeIn>
+          <div style={{ marginBottom: 56, textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1e6e45', marginBottom: 14 }}>Pricing</div>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 700, color: '#fff', lineHeight: 1.15, letterSpacing: '-0.03em' }}>Start free. Upgrade when you're ready.</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
-            {PLANS.map(plan => (
-              <div key={plan.name} style={{ position: 'relative', background: plan.highlight ? 'var(--forest-500)' : 'var(--surface-0)', border: plan.highlight ? 'none' : '1.5px solid var(--ink-100)', borderRadius: 20, padding: '28px 24px', display: 'flex', flexDirection: 'column', boxShadow: plan.highlight ? '0 8px 32px rgba(30,110,69,0.35)' : 'none', marginTop: plan.highlight ? 0 : 0 }}>
-                {plan.badge && (
-                  <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#d4890a', color: '#fff', borderRadius: 99, padding: '4px 14px', fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{plan.badge}</div>
-                )}
-                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: plan.highlight ? 'rgba(255,255,255,0.6)' : 'var(--ink-400)', marginBottom: 10 }}>{plan.name}</div>
+        </FadeIn>
+        <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr 1fr', gap: 12, alignItems: 'start' }}>
+          {plans.map((plan, i) => (
+            <FadeIn key={plan.name} delay={i * 80}>
+              <div style={{ background: plan.highlight ? '#fff' : 'rgba(255,255,255,0.04)', border: plan.highlight ? 'none' : '1px solid #3f3f46', borderRadius: 20, padding: plan.highlight ? 32 : 28, position: 'relative', overflow: 'hidden' }}>
+                {plan.tag && <div style={{ position: 'absolute', top: 16, right: 16, background: '#1e6e45', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: 999, padding: '4px 12px' }}>{plan.tag}</div>}
+                <div style={{ fontSize: 13, fontWeight: 700, color: plan.highlight ? '#18181b' : '#71717a', marginBottom: 12 }}>{plan.name}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: 44, fontWeight: 700, letterSpacing: '-0.03em', color: plan.highlight ? '#fff' : 'var(--ink-900)', lineHeight: 1 }}>{plan.price}</span>
-                  {plan.period && <span style={{ fontSize: 13, color: plan.highlight ? 'rgba(255,255,255,0.55)' : 'var(--ink-400)', fontWeight: 500 }}>{plan.period}</span>}
+                  <span style={{ fontSize: 36, fontWeight: 900, color: plan.highlight ? '#18181b' : '#fff', letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{plan.price}</span>
+                  <span style={{ fontSize: 13, color: plan.highlight ? '#71717a' : '#52525b' }}>{plan.period}</span>
                 </div>
-                <p style={{ fontSize: 13, color: plan.highlight ? 'rgba(255,255,255,0.7)' : 'var(--ink-400)', marginBottom: 22, lineHeight: 1.55 }}>{plan.desc}</p>
-                <ul style={{ listStyle: 'none', padding: 0, marginBottom: 24, flex: 1, display: 'flex', flexDirection: 'column', gap: 9 }}>
+                <div style={{ height: 1, background: plan.highlight ? '#e4e4e7' : '#3f3f46', margin: '20px 0' }} />
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
                   {plan.features.map(f => (
-                    <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13 }}>
-                      <CheckCircle size={14} color={plan.highlight ? 'rgba(255,255,255,0.7)' : 'var(--forest-500)'} />
-                      <span style={{ color: plan.highlight ? 'rgba(255,255,255,0.9)' : 'var(--ink-600)' }}>{f}</span>
+                    <li key={f} style={{ display: 'flex', gap: 9, fontSize: 13, color: plan.highlight ? '#3f3f46' : '#71717a', alignItems: 'flex-start' }}>
+                      <span style={{ color: '#1e6e45', flexShrink: 0, fontWeight: 700 }}>✓</span>{f}
                     </li>
                   ))}
                 </ul>
-                <Link href={plan.href} style={{ display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none', letterSpacing: '-0.01em', background: plan.highlight ? '#fff' : 'var(--forest-500)', color: plan.highlight ? 'var(--forest-600)' : '#fff', transition: 'all 0.15s' }}>
-                  {plan.cta} →
-                </Link>
+                <Link href="/auth" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: plan.highlight ? '#18181b' : 'transparent', color: plan.highlight ? '#fff' : '#71717a', border: plan.highlight ? 'none' : '1px solid #3f3f46', borderRadius: 999, padding: '12px', fontSize: 14, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { if (plan.highlight) (e.currentTarget as HTMLElement).style.background = '#1e6e45'; else { (e.currentTarget as HTMLElement).style.borderColor = '#fff'; (e.currentTarget as HTMLElement).style.color = '#fff' } }}
+                  onMouseLeave={e => { if (plan.highlight) (e.currentTarget as HTMLElement).style.background = '#18181b'; else { (e.currentTarget as HTMLElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLElement).style.color = '#71717a' } }}
+                >{plan.cta}</Link>
               </div>
-            ))}
-          </div>
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-400)', marginTop: 24, fontWeight: 500 }}>Cancel anytime · No contracts · VAT included</p>
+            </FadeIn>
+          ))}
         </div>
-      </section>
+      </div>
+    </section>
+  )
+}
 
-      {/* ── FINAL CTA ───────────────────────────────────── */}
-      <section style={{ padding: '96px 24px', background: 'var(--surface-0)' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ink-900)', lineHeight: 1.08, marginBottom: 18, textWrap: 'balance' }}>
-            Stop applying blindly.<br />
-            <em style={{ color: 'var(--forest-500)' }}>Start applying strategically.</em>
-          </h2>
-          <p style={{ fontSize: 16, color: 'var(--ink-400)', marginBottom: 32, lineHeight: 1.7 }}>Build your profile once. Tailor every application in under 3 minutes.</p>
-          <Link href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'var(--forest-500)', color: '#fff', padding: '15px 32px', borderRadius: 14, fontWeight: 700, fontSize: 16, textDecoration: 'none', letterSpacing: '-0.01em', boxShadow: '0 4px 8px rgba(0,0,0,0.1), 0 16px 40px rgba(30,110,69,0.3)', transition: 'all 0.2s' }}>
-            Get started — it&apos;s free <ArrowRight size={18} />
-          </Link>
-          <p style={{ fontSize: 13, color: 'var(--ink-300)', marginTop: 14, fontWeight: 500 }}>No card required · Free forever</p>
+function FinalCTA() {
+  return (
+    <section style={{ padding: '96px 24px', background: '#fafaf9' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <div className="cta-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+          <FadeIn>
+            <div>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 3.5vw, 3.2rem)', fontWeight: 700, color: '#18181b', lineHeight: 1.15, letterSpacing: '-0.03em', marginBottom: 20 }}>Stop sending CVs that disappear into silence</h2>
+              <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.7, marginBottom: 32, maxWidth: '48ch' }}>The average job gets 250 applications. Folio gives you the edge — a CV that's been scored, tailored, and optimised before it reaches a recruiter.</p>
+              <Link href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#18181b', color: '#fff', textDecoration: 'none', borderRadius: 999, padding: '14px 28px', fontSize: 15, fontWeight: 700, transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)', boxShadow: '0 4px 20px rgba(24,24,27,0.2)' }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#1e6e45'; el.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#18181b'; el.style.transform = 'translateY(0)' }}
+              >
+                Build my CV for free
+                <span style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>→</span>
+              </Link>
+            </div>
+          </FadeIn>
+          <FadeIn delay={120}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {[
+                { n: '250', label: 'Avg applications per role', sub: 'You need to stand out' },
+                { n: '7s', label: 'Time to scan a CV', sub: 'First impression is everything' },
+                { n: '75%', label: 'CVs rejected by ATS', sub: 'Before a human sees them' },
+                { n: '3×', label: 'More callbacks', sub: 'With a tailored CV' },
+              ].map(s => (
+                <div key={s.label} style={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: 16, padding: '20px 18px' }}>
+                  <div style={{ fontSize: 28, fontWeight: 900, color: '#18181b', letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{s.n}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#18181b', marginBottom: 3 }}>{s.label}</div>
+                  <div style={{ fontSize: 11, color: '#a1a1aa' }}>{s.sub}</div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
         </div>
-      </section>
+      </div>
+    </section>
+  )
+}
 
-      {/* ── FOOTER ──────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--ink-100)', padding: '32px 24px', background: 'var(--surface-1)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>Folio</span>
-            <span style={{ fontSize: 11, color: 'var(--ink-400)', fontWeight: 500 }}>AI-Powered CV Builder</span>
-          </div>
-          <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--ink-400)', fontWeight: 500 }}>
-            <Link href="/privacy" style={{ color: 'var(--ink-400)', textDecoration: 'none' }}>Privacy</Link>
-            <Link href="/terms" style={{ color: 'var(--ink-400)', textDecoration: 'none' }}>Terms</Link>
-            <a href="mailto:hello@folio.cv" style={{ color: 'var(--ink-400)', textDecoration: 'none' }}>Contact</a>
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--ink-300)', fontWeight: 500 }}>© {new Date().getFullYear()} Folio</p>
+function Footer() {
+  return (
+    <footer style={{ background: '#18181b', borderTop: '1px solid #3f3f46', padding: '40px 24px' }}>
+      <div className="footer-inner" style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ fontFamily: 'Georgia, serif', fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em' }}>Folio</span>
+          <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: '0.2em', color: '#1e6e45', textTransform: 'uppercase' }}>CV</span>
         </div>
-      </footer>
+        <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+          {[['Sign in', '/auth?mode=signin'], ['Get started', '/auth'], ['Privacy', '#'], ['Terms', '#']].map(([label, href]) => (
+            <a key={label} href={href} style={{ fontSize: 13, color: '#71717a', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fff'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}
+            >{label}</a>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, color: '#52525b' }}>© 2025 Folio. All rights reserved.</div>
+      </div>
+    </footer>
+  )
+}
 
-    </div>
+export default function LandingPage() {
+  return (
+    <main style={{ overflowX: 'hidden', width: '100%', maxWidth: '100%' }}>
+      <Nav />
+      <Hero />
+      <StatsBar />
+      <Features />
+      <HowItWorks />
+      <Testimonials />
+      <Pricing />
+      <FinalCTA />
+      <Footer />
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #fafaf9; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+        @media (max-width: 768px) {
+          .hero-grid { grid-template-columns: 1fr !important; }
+          .bento-grid { grid-template-columns: 1fr !important; }
+          .bento-grid > * { grid-column: span 1 !important; }
+          .steps-grid { grid-template-columns: 1fr 1fr !important; }
+          .pricing-grid { grid-template-columns: 1fr !important; }
+          .testimonials-grid { grid-template-columns: 1fr !important; }
+          .cta-grid { grid-template-columns: 1fr !important; }
+          .stats-bar { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+          .footer-inner { flex-direction: column !important; align-items: flex-start !important; }
+        }
+      `}</style>
+    </main>
   )
 }
