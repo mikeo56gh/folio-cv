@@ -267,7 +267,7 @@ function AppShell() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         <header style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 16px', height: 52, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, position: 'sticky', top: 0, zIndex: 30 }}>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="folio-menu-btn"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6b7280', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6b7280', display: 'none', alignItems: 'center', flexShrink: 0 }}>
             <Menu size={20} />
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
