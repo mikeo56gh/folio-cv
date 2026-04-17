@@ -43,7 +43,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       whiteSpace: 'nowrap', width: fullWidth ? '100%' : undefined,
     }
     const variants: Record<BtnVariant, React.CSSProperties> = {
-      primary:   { background: T.green, color: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(22,163,74,0.25)' },
+      primary:   { background: '#1e6e45', color: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(30,110,69,0.25)' },
       secondary: { background: T.surface, color: T.inkMid, border: `1.5px solid ${T.border}` },
       ghost:     { background: 'transparent', color: T.inkSoft },
       danger:    { background: T.redBg, color: T.red, border: `1.5px solid #fecaca` },
@@ -79,7 +79,7 @@ export function Card({ children, className, accent, style }: {
   style?: React.CSSProperties
 }) {
   const accentStyles: Record<string, React.CSSProperties> = {
-    green: { borderLeft: `3px solid ${T.green}` },
+    green: { borderLeft: `3px solid #1e6e45` },
     amber: { borderLeft: `3px solid ${T.amber}` },
     red:   { borderLeft: `3px solid ${T.red}` },
     blue:  { borderLeft: '3px solid #3b82f6' },
@@ -87,11 +87,11 @@ export function Card({ children, className, accent, style }: {
   return (
     <div
       style={{
-        background: T.surface,
-        border: `1px solid ${T.border}`,
-        borderRadius: 14,
-        padding: '20px 22px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        background: '#ffffff',
+        border: `1px solid #e4e4e7`,
+        borderRadius: 16,
+        padding: '22px 24px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         ...(accent ? accentStyles[accent] : {}),
         ...style,
       }}
@@ -320,11 +320,11 @@ export function DatePicker({ label, monthVal, yearVal, onChangeMonth, onChangeYe
 // ─── SECTION HEADER ──────────────────────────────────────────
 export function SectionHeader({ title, sub, eyebrow, action }: { title: string; sub?: string; eyebrow?: string; action?: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 20 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid #f3f4f6' }}>
       <div>
-        {eyebrow && <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.green, marginBottom: 4 }}>{eyebrow}</div>}
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em', marginBottom: sub ? 3 : 0, fontFamily: 'var(--font-sans)' }}>{title}</h2>
-        {sub && <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.5 }}>{sub}</p>}
+        {eyebrow && <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1e6e45', marginBottom: 6 }}>{eyebrow}</div>}
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#18181b', letterSpacing: '-0.03em', marginBottom: sub ? 5 : 0, fontFamily: 'Georgia, serif', lineHeight: 1.2 }}>{title}</h2>
+        {sub && <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, maxWidth: '60ch' }}>{sub}</p>}
       </div>
       {action && <div style={{ flexShrink: 0, display: 'flex', gap: 8, alignItems: 'center' }}>{action}</div>}
     </div>
@@ -361,12 +361,12 @@ export function CompletenessBar({ checks }: { checks: { label: string; ok: boole
 // ─── GUIDANCE ─────────────────────────────────────────────────
 export function Guidance({ title, items }: { title: string; items: (string | React.ReactNode)[] }) {
   return (
-    <div style={{ background: '#f0fdf4', border: `1px solid ${T.greenBorder}`, borderRadius: 12, padding: '14px 18px', marginBottom: 20 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: T.greenDark, marginBottom: 8 }}>{title}</div>
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+    <div style={{ background: '#f8fffe', border: `1px solid #d1fae5`, borderRadius: 14, padding: '16px 20px', marginBottom: 20 }}>
+      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1e6e45', marginBottom: 10 }}>{title}</div>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
         {items.map((item, i) => (
-          <li key={i} style={{ fontSize: 12, color: '#166534', lineHeight: 1.55, display: 'flex', gap: 8 }}>
-            <span style={{ flexShrink: 0, marginTop: 2 }}>→</span>
+          <li key={i} style={{ fontSize: 13, color: '#166534', lineHeight: 1.6, display: 'flex', gap: 10 }}>
+            <span style={{ flexShrink: 0, marginTop: 1, color: '#1e6e45', fontWeight: 700 }}>→</span>
             <span>{item}</span>
           </li>
         ))}
@@ -378,8 +378,9 @@ export function Guidance({ title, items }: { title: string; items: (string | Rea
 // ─── TIP ──────────────────────────────────────────────────────
 export function Tip({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: T.amberBg, border: `1px solid ${T.amberBorder}`, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: '#92400e', lineHeight: 1.55 }}>
-      💡 {children}
+    <div style={{ background: T.amberBg, border: `1px solid ${T.amberBorder}`, borderRadius: 12, padding: '12px 16px', marginBottom: 12, fontSize: 13, color: '#92400e', lineHeight: 1.6, display: 'flex', gap: 10 }}>
+      <span style={{ flexShrink: 0, fontWeight: 700, color: T.amber }}>→</span>
+      <span>{children}</span>
     </div>
   )
 }
