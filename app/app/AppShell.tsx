@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { authClient } from '@/lib/auth/client'
 import {
   User, Briefcase, GraduationCap, Award, Zap, Search, LayoutGrid,
-  Clock, Wrench, Sparkles, LogOut, CreditCard, Plus, ChevronRight,
-  CheckCircle, Circle, Menu, X, TrendingUp
+  Clock, Wrench, Sparkles, LogOut, Plus, ChevronRight,
+  CheckCircle, Circle, Menu, X
 } from 'lucide-react'
 import { AppProvider, useApp, SENIORITY } from './context'
 import { ProfileTab } from './tabs/ProfileTab'
@@ -138,15 +138,20 @@ function Sidebar({ tab, setTab, open, setOpen }: { tab: string; setTab: (t: stri
 
   return (
     <>
-      {open && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 49 }} onClick={() => setOpen(false)} />}
-      <aside style={{
-        width: 224, flexShrink: 0, background: '#fff', borderRight: '1px solid #e5e7eb',
-        display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, overflow: 'hidden',
-      }} className="sidebar">
+      {open && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 49 }} onClick={() => setOpen(false)} />
+      )}
+      <aside className={`folio-sidebar${open ? ' folio-sidebar-open' : ''}`}>
         <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid #f3f4f6' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>Folio</span>
-            <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: '0.18em', color: '#16a34a', textTransform: 'uppercase' }}>CV Builder</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+              <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>Folio</span>
+              <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: '0.18em', color: '#16a34a', textTransform: 'uppercase' }}>CV Builder</span>
+            </div>
+            <button onClick={() => setOpen(false)} className="folio-sidebar-close"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', display: 'none' }}>
+              <X size={18} />
+            </button>
           </div>
         </div>
 
@@ -218,12 +223,12 @@ function FreeBanner() {
   const { userInfo, checkout } = useApp()
   if (!userInfo || userInfo.plan !== 'free') return null
   return (
-    <div style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
       <span style={{ fontSize: 12, color: '#92400e', fontWeight: 500 }}>
-        Free plan · {userInfo.usageSummary?.cv?.remaining ?? '?'} CV generations and {userInfo.usageSummary?.review?.remaining ?? '?'} fit reviews remaining
+        Free plan · {userInfo.usageSummary?.cv?.remaining ?? '?'} CV generations remaining
       </span>
       <button onClick={() => checkout('pro')}
-        style={{ fontSize: 12, fontWeight: 700, color: '#d97706', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', textDecoration: 'underline' }}>
+        style={{ fontSize: 12, fontWeight: 700, color: '#d97706', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
         Upgrade →
       </button>
     </div>
@@ -260,33 +265,33 @@ function AppShell() {
       <UpgradeModal />
       <Sidebar tab={tab} setTab={setTab} open={sidebarOpen} setOpen={setSidebarOpen} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-        <header style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 20px', height: 52, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, position: 'sticky', top: 0, zIndex: 30 }}>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6b7280' }} className="md:hidden sidebar-toggle">
+        <header style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 16px', height: 52, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, position: 'sticky', top: 0, zIndex: 30 }}>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="folio-menu-btn"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6b7280', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <Menu size={20} />
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-            <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>Folio</span>
-            <ChevronRight size={13} style={{ color: '#d1d5db' }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{currentTabInfo?.label || 'App'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500, whiteSpace: 'nowrap' }}>Folio</span>
+            <ChevronRight size={13} style={{ color: '#d1d5db', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentTabInfo?.label || 'App'}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {isSetupTab && currentIdx < SETUP_TABS.length - 1 && (
               <button onClick={() => setTab(SETUP_TABS[currentIdx + 1].id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
                 Next <ChevronRight size={14} />
               </button>
             )}
             {currentIdx === SETUP_TABS.length - 1 && (
               <button onClick={() => setTab('generate')}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-                Generate CV <Sparkles size={14} />
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
+                Generate <Sparkles size={14} />
               </button>
             )}
           </div>
         </header>
         <FreeBanner />
-        <main style={{ flex: 1, padding: '24px 24px 48px', maxWidth: 900, width: '100%', margin: '0 auto' }}>
+        <main style={{ flex: 1, padding: '20px 16px 64px', maxWidth: 900, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
           <AnimatePresence mode="wait">
             <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
               {tab === 'profile'        && <ProfileTab />}
@@ -304,15 +309,40 @@ function AppShell() {
         </main>
       </div>
       <style>{`
-        @media (max-width: 768px) {
-          .sidebar { position: fixed !important; z-index: 50 !important; }
-          .sidebar-toggle { display: flex !important; }
+        .folio-sidebar {
+          width: 224px;
+          flex-shrink: 0;
+          background: #fff;
+          border-right: 1px solid #e5e7eb;
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          position: sticky;
+          top: 0;
+          overflow: hidden;
         }
-        @media (min-width: 769px) {
-          .sidebar { position: sticky !important; left: unset !important; }
+        .folio-menu-btn { display: none; }
+        @media (max-width: 768px) {
+          .folio-sidebar {
+            position: fixed !important;
+            left: -240px;
+            top: 0;
+            bottom: 0;
+            height: 100vh;
+            z-index: 50;
+            transition: left 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: none;
+          }
+          .folio-sidebar.folio-sidebar-open {
+            left: 0;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+          }
+          .folio-sidebar-close { display: flex !important; }
+          .folio-menu-btn { display: flex !important; }
         }
         * { box-sizing: border-box; }
         select { appearance: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   )
